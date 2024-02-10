@@ -235,18 +235,38 @@ namespace webapi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddProduct(Product product)
+        public async Task<ActionResult> AddProduct(IFormFile imageFile, [FromForm] Product product)
         {
+            if (imageFile != null)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    await imageFile.CopyToAsync(memoryStream);
+                    product.ProductImage = memoryStream.ToArray();
+                }
+            }
+
             await productRepo.AddProduct(product);
             return Created($"api/product/{product.ProductId}", product);
         }
 
-        [HttpPut]
-        public async Task<ActionResult> UpdateProduct(int productId, Product product)
+
+        [HttpPut("{productId}")]
+        public async Task<ActionResult> UpdateProduct(int productId, IFormFile imageFile, [FromForm] Product product)
         {
+            if (imageFile != null)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    await imageFile.CopyToAsync(memoryStream);
+                    product.ProductImage = memoryStream.ToArray();
+                }
+            }
+
             await productRepo.UpdateProduct(productId, product);
             return Ok(product);
         }
+
 
         [HttpDelete]
         public async Task<ActionResult> DeleteProduct(int productId)
@@ -257,4 +277,4 @@ namespace webapi.Controllers
     }
 }
 
-I am already created a property to store the Products images, So implement necessary functionalities to upload the images to the database Product table.
+Then Please implement the Front end web page using React JS and Bootstrap for the admin side to adding , updating, deleting, fetching all products, Fetching Single product using ProductId, Fetching Products using CategoryName.
