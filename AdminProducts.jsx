@@ -1,187 +1,165 @@
-ProductController.cs:
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using OnlineShopping.Models;
-using OnlineShopping.Repos;
+ImageUploader.jsx:
+import React, { useState } from "react";
+import axios from "axios";
 
-namespace webapi.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductController : ControllerBase
-    {
-        IProductRepo productRepo;
+const ImageUploader = () => {
+    const [selectedFile, setSelectedFile] = useState(null);
 
-        public ProductController(IProductRepo repo)
-        {
-             productRepo = repo;
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files[0]);
+    };
+
+    const handleUpload = async () => {
+        const formData = new FormData();
+        formData.append("image", selectedFile);
+
+        try {
+            await axios.post("http://localhost:5094/api/Image", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            alert("Image uploaded successfully!");
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            alert("Failed to upload image. Please try again.");
         }
+    };
 
-        [HttpGet("AllProducts")]
-        public async Task<ActionResult> GetAllProducts()
-        {
-            List<Product> products = await productRepo.GetAllProducts();
-            return Ok(products);
-        }
+    return (
+        <div>
+            <h1>Image Uploader</h1>
+            <input type="file" onChange={handleFileChange} />
+            <button onClick={handleUpload}>Upload</button>
+        </div>
+    );
+};
 
-        [HttpGet("ProductById/{productId}")]
-        public async Task<ActionResult> GetProductById(int productId)
-        {
-            try
-            {
-                Product product = await productRepo.GetProductById(productId);
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
+export default ImageUploader;
 
-        [HttpGet("ProductByName/{productName}")]
-        public async Task<ActionResult> GetProductByName(string productName)
-        {
-            try
-            {
-                Product product = await productRepo.GetProductByName(productName);
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
+AdminProducts.jsx:
+import React, { useState, useEffect } from 'react';
 
-        [HttpGet("ProductByCategory/{categoryId}")]
-        public async Task<ActionResult> GetProductsByCategory(int categoryId)
-        {
-            try
-            {
-                List<Product> product = await productRepo.GetProductsByCategory(categoryId);
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
+function AdminProducts() {
+    const [products, setProducts] = useState([]);
+    const [product, setProduct] = useState({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: null });
 
-        [HttpPost]
-        public async Task<ActionResult> AddProduct([FromForm] IFormFile imageFile, [FromForm] Product product)
-        {
-            if (imageFile != null)
-            {
-                using (var memoryStream = new MemoryStream())
-                {
-                    await imageFile.CopyToAsync(memoryStream);
-                    product.ProductImage = memoryStream.ToArray();
-                }
-            }
+    useEffect(() => {
+        fetchAllProducts();
+    }, []);
 
-            await productRepo.AddProduct(product);
-            return Created($"api/product/{product.ProductId}", product);
-        }
+    const fetchAllProducts = () => {
+        fetch("http://localhost:5183/api/Product/AllProducts")
+            .then(result => result.json())
+            .then(result => {
+                setProducts(result);
+            });
+    };
 
+    const deleteProduct = (productId) => {
+        fetch('http://localhost:5183/api/Product/' + productId, {
+            method: 'DELETE',
+        }).then(result => result.text()).then(result => {
+            alert("Product deleted");
+            setProducts(products.filter(p => p.productId !== productId));
+        });
+    };
 
-        [HttpPut("{productId}")]
-        public async Task<ActionResult> UpdateProduct(int productId, IFormFile imageFile, [FromForm] Product product)
-        {
-            if (imageFile != null)
-            {
-                using (var memoryStream = new MemoryStream())
-                {
-                    await imageFile.CopyToAsync(memoryStream);
-                    product.ProductImage = memoryStream.ToArray();
-                }
-            }
+    const updateProduct = (productId) => {
+        fetch('http://localhost:5183/api/Product/' + productId, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(product),
+        })
+            .then((result) => result.json())
+            .then((updatedProduct) => {
+                alert('Product updated');
+                setProducts((prevProducts) =>
+                    prevProducts.map((p) =>
+                        p.productId === productId ? updatedProduct : p
+                    )
+                );
+                setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, productImage: null });
+            });
+    };
 
-            await productRepo.UpdateProduct(productId, product);
-            return Ok(product);
-        }
+    const addProduct = () => {
+        fetch("http://localhost:5183/api/Product", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(product)
+        }).then(result => result.json()).then(result => {
+            alert("Product added");
+            fetchAllProducts();
+            setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: null });
+        });
+    };
 
+    return (
+        <div className="container mt-4">
+            <h2 className="main-heading">Product Form  </h2>
+            <div className="underline"></div>
+            <form>
+                <div className="mb-3">
+                    <label htmlFor="productId" className="form-label">Product Id:</label>
+                    <input type="text" className="form-control" id="productId" value={product.productId}
+                        onChange={(e) => setProduct(prev => ({ ...prev, productId: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="productName" className="form-label">Product Name:</label>
+                    <input type="text" className="form-control" id="productName" value={product.productName}
+                        onChange={(e) => setProduct(prev => ({ ...prev, productName: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="description" className="form-label">Description:</label>
+                    <input type="text" className="form-control" id="description" value={product.description}
+                        onChange={(e) => setProduct(prev => ({ ...prev, description: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="price" className="form-label">Price:</label>
+                    <input type="number" className="form-control" id="price" value={product.price}
+                        onChange={(e) => setProduct(prev => ({ ...prev, price: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="categoryId" className="form-label">Category ID:</label>
+                    <input type="number" className="form-control" id="categoryId" value={product.categoryId}
+                        onChange={(e) => setProduct(prev => ({ ...prev, categoryId: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="productImage" className="form-label">Product Image:</label>
+                    <input type="file" className="form-control" id="productImage"
+                        onChange={(e) => setProduct(prev => ({ ...prev, productImage: e.target.files[0] }))} />
+                </div>
+                <button type="button" className="btn btn-primary" onClick={fetchAllProducts}>Show All Products</button>
+                <button type="button" className="btn btn-success ms-2" onClick={addProduct}>Add Product</button>
+                <button type="button" className="btn btn-warning ms-2" onClick={() => updateProduct(product.productId)}>Update Product</button>
 
-        [HttpDelete]
-        public async Task<ActionResult> DeleteProduct(int productId)
-        {
-            await productRepo.DeleteProduct(productId);
-            return Ok();
-        }
-    }
+            </form>
+            <h3 className="mt-4">List of Products</h3>
+            <table className="table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th><th>Description</th><th>Price</th><th>Category ID</th><th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {products.map(product => (
+                        <tr key={product.productId}>
+                            <td>{product.productName}</td><td>{product.description}</td><td>{product.price}</td><td>{product.categoryId}</td>
+                            <td>
+                                <button type="button" className="btn btn-danger" onClick={() => deleteProduct(product.productId)}>Delete</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
 }
 
-Implement the functionality to upload the product image in above controller like what i used in below imageController.cs
-
-ImageController:
-using ImageLibrary.Models;
-using ImageLibrary.Repos;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
-namespace webapi.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ImageController : ControllerBase
-    {
-         private readonly IImageRepository _imageRepository;
-
-    public ImageController(IImageRepository imageRepository)
-    {
-        _imageRepository = imageRepository;
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetImages()
-    {
-        var images = await _imageRepository.GetAllImages();
-        return Ok(images);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetImage(int id)
-    {
-        var image = await _imageRepository.GetImageById(id);
-        if (image == null)
-        {
-            return NotFound();
-        }
-        return Ok(image);
-    }
-
-        [HttpPost]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> AddImage([FromForm] IFormFile image)
-        {
-            if (image == null)
-            {
-                return BadRequest();
-            }
-
-            // Convert IFormFile to Image model if necessary
-            var imageData = new Image
-            {
-                FileName = image.FileName,
-                Data = await GetByteArrayFromFormFile(image)
-            };
-
-            await _imageRepository.AddImage(imageData);
-            return Created($"api/Image/{imageData.Id}", imageData);
-        }
-
-        private async Task<byte[]> GetByteArrayFromFormFile(IFormFile file)
-        {
-            using (var memoryStream = new MemoryStream())
-            {
-                await file.CopyToAsync(memoryStream);
-                return memoryStream.ToArray();
-            }
-        }
-
-        [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteImage(int id)
-    {
-        await _imageRepository.DeleteImage(id);
-        return Ok();
-    }
-    }
-}
+export default AdminProducts;
+Please take the reference from ImageUploader.jsx and design the part of upload the product Image in AdminProducts.jsx page.
