@@ -2,159 +2,124 @@ import React, { useState, useEffect } from 'react';
 
 function AdminProducts() {
     const [products, setProducts] = useState([]);
-    const [productName, setProductName] = useState('');
-    const [description, setDescription] = useState('');
-    const [price, setPrice] = useState(0);
-    const [categoryId, setCategoryId] = useState('');
-    const [imageFile, setImageFile] = useState(null);
-    const [categoryIdForFilter, setCategoryIdForFilter] = useState('');
-    const [productIdForDetail, setProductIdForDetail] = useState('');
-    const [filteredProducts, setFilteredProducts] = useState([]);
-    const [productDetail, setProductDetail] = useState(null);
+    const [product, setProduct] = useState({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: null });
 
     useEffect(() => {
         fetchAllProducts();
     }, []);
 
-    const fetchAllProducts = async () => {
-        try {
-            const response = await fetch('http://localhost:5183/api/Product/AllProducts');
-            const data = await response.json();
-            setProducts(data);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-        }
-    };
-
-    const handleAddProduct = async (e) => {
-        e.preventDefault();
-        const formData = new FormData();
-        formData.append('productName', productName);
-        formData.append('description', description);
-        formData.append('price', price);
-        formData.append('categoryId', categoryId);
-        formData.append('imageFile', imageFile);
-
-        try {
-            await fetch('http://localhost:5183/api/Product', {
-                method: 'POST',
-                body: formData
+    const fetchAllProducts = () => {
+        fetch("http://localhost:5183/api/Product/AllProducts")
+            .then(result => result.json())
+            .then(result => {
+                setProducts(result);
             });
-            // Reset form fields after successful submission
-            setProductName('');
-            setDescription('');
-            setPrice(0);
-            setCategoryId('');
-            setImageFile(null);
-            fetchAllProducts(); // Refresh product list
-        } catch (error) {
-            console.error('Error adding product:', error);
-        }
     };
 
-    const handleUpdateProduct = async (productId) => {
-        // Fetch the product detail for the provided productId
-        try {
-            const response = await fetch(`http://localhost:5183/api/Product/ProductById/${productId}`);
-            const data = await response.json();
-            setProductDetail(data);
-        } catch (error) {
-            console.error('Error fetching product detail:', error);
-        }
+    const deleteProduct = (productId) => {
+        fetch('http://localhost:5183/api/Product/' + productId, {
+            method: 'DELETE',
+        }).then(result => result.text()).then(result => {
+            alert("Product deleted");
+            setProducts(products.filter(p => p.productId !== productId));
+        });
     };
 
-    const handleDeleteProduct = async (productId) => {
-        try {
-            await fetch(`http://localhost:5183/api/Product/${productId}`, {
-                method: 'DELETE'
+    const updateProduct = (productId) => {
+        fetch('http://localhost:5183/api/Product/' + productId, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(product),
+        })
+            .then((result) => result.json())
+            .then((updatedProduct) => {
+                alert('Product updated');
+                setProducts((prevProducts) =>
+                    prevProducts.map((p) =>
+                        p.productId === productId ? updatedProduct : p
+                    )
+                );
+                setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, productImage: null });
             });
-            fetchAllProducts(); // Refresh product list
-        } catch (error) {
-            console.error('Error deleting product:', error);
-        }
     };
 
-    const handleFilterByCategory = async () => {
-        try {
-            const response = await fetch(`http://localhost:5183/api/Product/ProductByCategory/${categoryIdForFilter}`);
-            const data = await response.json();
-            setFilteredProducts(data);
-        } catch (error) {
-            console.error('Error filtering products by category:', error);
-        }
-    };
-
-    const handleGetProductDetail = async () => {
-        try {
-            const response = await fetch(`http://localhost:5183/api/Product/ProductById/${productIdForDetail}`);
-            const data = await response.json();
-            setProductDetail(data);
-        } catch (error) {
-            console.error('Error fetching product detail:', error);
-        }
+    const addProduct = () => {
+        fetch("http://localhost:5183/api/Product", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(product)
+        }).then(result => result.json()).then(result => {
+            alert("Product added");
+            fetchAllProducts();
+            setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: null });
+        });
     };
 
     return (
-        <div className="container">
-            <h2>Admin Products Panel</h2>
-            {/* Add Product Form */}
-            <form onSubmit={handleAddProduct}>
-                {/* Form fields for adding product */}
-                <button type="submit">Add Product</button>
+        <div className="container mt-4">
+            <h2 className="main-heading">Product Form  </h2>
+            <div className="underline"></div>
+            <form>
+                <div className="mb-3">
+                    <label htmlFor="productId" className="form-label">Product Id:</label>
+                    <input type="text" className="form-control" id="productId" value={product.productId}
+                        onChange={(e) => setProduct(prev => ({ ...prev, productId: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="productName" className="form-label">Product Name:</label>
+                    <input type="text" className="form-control" id="productName" value={product.productName}
+                        onChange={(e) => setProduct(prev => ({ ...prev, productName: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="description" className="form-label">Description:</label>
+                    <input type="text" className="form-control" id="description" value={product.description}
+                        onChange={(e) => setProduct(prev => ({ ...prev, description: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="price" className="form-label">Price:</label>
+                    <input type="number" className="form-control" id="price" value={product.price}
+                        onChange={(e) => setProduct(prev => ({ ...prev, price: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="categoryId" className="form-label">Category ID:</label>
+                    <input type="number" className="form-control" id="categoryId" value={product.categoryId}
+                        onChange={(e) => setProduct(prev => ({ ...prev, categoryId: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="productImage" className="form-label">Product Image:</label>
+                    <input type="file" className="form-control" id="productImage"
+                        onChange={(e) => setProduct(prev => ({ ...prev, productImage: e.target.files[0] }))} />
+                </div>
+                <button type="button" className="btn btn-primary" onClick={fetchAllProducts}>Show All Products</button>
+                <button type="button" className="btn btn-success ms-2" onClick={addProduct}>Add Product</button>
+                <button type="button" className="btn btn-warning ms-2" onClick={() => updateProduct(product.productId)}>Update Product</button>
+
             </form>
-
-            {/* Product List */}
-            <h3>Product List</h3>
-            <ul>
-                {products.map(product => (
-                    <li key={product.productId}>
-                        {product.productName} - {product.description} - ${product.price}
-                        <button onClick={() => handleUpdateProduct(product.productId)}>Edit</button>
-                        <button onClick={() => handleDeleteProduct(product.productId)}>Delete</button>
-                    </li>
-                ))}
-            </ul>
-
-            {/* Filter Products by Category */}
-            <div>
-                <h3>Filter Products by Category</h3>
-                <input
-                    type="text"
-                    placeholder="Enter Category ID"
-                    value={categoryIdForFilter}
-                    onChange={(e) => setCategoryIdForFilter(e.target.value)}
-                />
-                <button onClick={handleFilterByCategory}>Filter</button>
-            </div>
-
-            {/* Display Filtered Products */}
-            <ul>
-                {filteredProducts.map(product => (
-                    <li key={product.productId}>{product.productName}</li>
-                ))}
-            </ul>
-
-            {/* Get Product Detail by ID */}
-            <div>
-                <h3>Get Product Detail by ID</h3>
-                <input
-                    type="text"
-                    placeholder="Enter Product ID"
-                    value={productIdForDetail}
-                    onChange={(e) => setProductIdForDetail(e.target.value)}
-                />
-                <button onClick={handleGetProductDetail}>Get Detail</button>
-                {productDetail && (
-                    <div>
-                        <p>Name: {productDetail.productName}</p>
-                        <p>Description: {productDetail.description}</p>
-                        <p>Price: ${productDetail.price}</p>
-                    </div>
-                )}
-            </div>
+            <h3 className="mt-4">List of Products</h3>
+            <table className="table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th><th>Description</th><th>Price</th><th>Category ID</th><th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {products.map(product => (
+                        <tr key={product.productId}>
+                            <td>{product.productName}</td><td>{product.description}</td><td>{product.price}</td><td>{product.categoryId}</td>
+                            <td>
+                                <button type="button" className="btn btn-danger" onClick={() => deleteProduct(product.productId)}>Delete</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }
 
 export default AdminProducts;
-      
+                                                                                                                                          
