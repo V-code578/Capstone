@@ -1,44 +1,5 @@
-ImageUploader.jsx:
-import React, { useState } from "react";
-import axios from "axios";
-
-const ImageUploader = () => {
-    const [selectedFile, setSelectedFile] = useState(null);
-
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
-    };
-
-    const handleUpload = async () => {
-        const formData = new FormData();
-        formData.append("image", selectedFile);
-
-        try {
-            await axios.post("http://localhost:5094/api/Image", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-            alert("Image uploaded successfully!");
-        } catch (error) {
-            console.error("Error uploading image:", error);
-            alert("Failed to upload image. Please try again.");
-        }
-    };
-
-    return (
-        <div>
-            <h1>Image Uploader</h1>
-            <input type="file" onChange={handleFileChange} />
-            <button onClick={handleUpload}>Upload</button>
-        </div>
-    );
-};
-
-export default ImageUploader;
-
-AdminProducts.jsx:
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 function AdminProducts() {
     const [products, setProducts] = useState([]);
@@ -66,42 +27,60 @@ function AdminProducts() {
     };
 
     const updateProduct = (productId) => {
-        fetch('http://localhost:5183/api/Product/' + productId, {
-            method: 'PUT',
+        const formData = new FormData();
+        formData.append("productName", product.productName);
+        formData.append("description", product.description);
+        formData.append("price", product.price);
+        formData.append("categoryId", product.categoryId);
+        formData.append("productImage", product.productImage);
+
+        axios.put(`http://localhost:5183/api/Product/${productId}`, formData, {
             headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(product),
+                'Content-Type': 'multipart/form-data'
+            }
         })
-            .then((result) => result.json())
-            .then((updatedProduct) => {
-                alert('Product updated');
-                setProducts((prevProducts) =>
-                    prevProducts.map((p) =>
-                        p.productId === productId ? updatedProduct : p
-                    )
-                );
-                setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, productImage: null });
-            });
+        .then(response => {
+            alert('Product updated');
+            fetchAllProducts();
+            setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, productImage: null });
+        })
+        .catch(error => {
+            console.error('Error updating product:', error);
+            alert('Failed to update product. Please try again.');
+        });
     };
 
     const addProduct = () => {
-        fetch("http://localhost:5183/api/Product", {
-            method: 'POST',
+        const formData = new FormData();
+        formData.append("productName", product.productName);
+        formData.append("description", product.description);
+        formData.append("price", product.price);
+        formData.append("categoryId", product.categoryId);
+        formData.append("productImage", product.productImage);
+
+        axios.post("http://localhost:5183/api/Product", formData, {
             headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(product)
-        }).then(result => result.json()).then(result => {
-            alert("Product added");
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then(response => {
+            alert('Product added');
             fetchAllProducts();
             setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: null });
+        })
+        .catch(error => {
+            console.error('Error adding product:', error);
+            alert('Failed to add product. Please try again.');
         });
+    };
+
+    const handleImageChange = (event) => {
+        setProduct(prev => ({ ...prev, productImage: event.target.files[0] }));
     };
 
     return (
         <div className="container mt-4">
-            <h2 className="main-heading">Product Form  </h2>
+            <h2 className="main-heading">Product Form</h2>
             <div className="underline"></div>
             <form>
                 <div className="mb-3">
@@ -131,13 +110,11 @@ function AdminProducts() {
                 </div>
                 <div className="mb-3">
                     <label htmlFor="productImage" className="form-label">Product Image:</label>
-                    <input type="file" className="form-control" id="productImage"
-                        onChange={(e) => setProduct(prev => ({ ...prev, productImage: e.target.files[0] }))} />
+                    <input type="file" className="form-control" id="productImage" onChange={handleImageChange} />
                 </div>
                 <button type="button" className="btn btn-primary" onClick={fetchAllProducts}>Show All Products</button>
                 <button type="button" className="btn btn-success ms-2" onClick={addProduct}>Add Product</button>
                 <button type="button" className="btn btn-warning ms-2" onClick={() => updateProduct(product.productId)}>Update Product</button>
-
             </form>
             <h3 className="mt-4">List of Products</h3>
             <table className="table">
@@ -162,4 +139,4 @@ function AdminProducts() {
 }
 
 export default AdminProducts;
-Please take the reference from ImageUploader.jsx and design the part of upload the product Image in AdminProducts.jsx page.
+                        
