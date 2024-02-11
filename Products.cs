@@ -33,8 +33,7 @@ namespace OnlineShopping.Models
 
         public virtual Category? Category { get; set; }
 
-        public string FileName { get; set; }
-
+        public string ProductFileName { get; set; }
         public byte[] ProductImage { get; set; } // New attribute for storing the image data
 
         public virtual ICollection<Cart> Carts { get; set; }
@@ -47,7 +46,6 @@ namespace OnlineShopping.Models
         }
     }
 }
-
 IProductRepo.cs:
 using OnlineShopping.Models;
 using System;
@@ -69,7 +67,6 @@ namespace OnlineShopping.Repos
         Task DeleteProduct(int productId);
     }
 }
-
 
 EFProductRepo.cs:
 using Microsoft.EntityFrameworkCore;
@@ -179,7 +176,7 @@ namespace OnlineShopping.Repos
                 product1.Description = product.Description;
                 product1.Price = product.Price;
                 product1.CategoryId = product.CategoryId;
-                product1.FileName = product.FileName;
+                product1.ProductFileName = product.ProductFileName;
                 product1.ProductImage = product.ProductImage;
                 await ctx.SaveChangesAsync();
             }
@@ -191,8 +188,6 @@ namespace OnlineShopping.Repos
         }
     }
 }
-
-
 
 ProductController.cs:
 using Microsoft.AspNetCore.Http;
@@ -209,7 +204,7 @@ namespace webapi.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        IProductRepo _productRepo;
+        private readonly IProductRepo _productRepo;
 
         public ProductController(IProductRepo repo)
         {
@@ -273,17 +268,21 @@ namespace webapi.Controllers
         }
 
         [HttpPost]
+        [Consumes("multipart/form-data")]
         public async Task<ActionResult> AddProduct([FromForm] IFormFile productImage, [FromForm] Product product)
         {
+            if (productImage == null || product == null)
+            {
+                return BadRequest();
+            }
+
             try
             {
-                if (productImage != null)
+                using (var memoryStream = new MemoryStream())
                 {
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        await productImage.CopyToAsync(memoryStream);
-                        product.ProductImage = memoryStream.ToArray();
-                    }
+                    await productImage.CopyToAsync(memoryStream);
+                    product.ProductImage = memoryStream.ToArray();
+                    product.ProductFileName = productImage.FileName;
                 }
 
                 await _productRepo.AddProduct(product);
@@ -334,64 +333,132 @@ namespace webapi.Controllers
     }
 }
 
-fail: Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddleware[1]
-      An unhandled exception has occurred while executing the request.
-      Swashbuckle.AspNetCore.SwaggerGen.SwaggerGeneratorException: Failed to generate Operation for action - webapi.Controllers.ProductController.AddProduct (webapi). See inner exception
-       ---> System.ArgumentException: An item with the same key has already been added. Key: FileName
-         at System.Collections.Generic.Dictionary`2.TryInsert(TKey key, TValue value, InsertionBehavior behavior)
-         at System.Collections.Generic.Dictionary`2.Add(TKey key, TValue value)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GenerateSchemaFromFormParameters(IEnumerable`1 formParameters, SchemaRepository schemaRepository)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GenerateRequestBodyFromFormParameters(ApiDescription apiDescription, SchemaRepository schemaRepository, IEnumerable`1 formParameters)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GenerateRequestBody(ApiDescription apiDescription, SchemaRepository schemaRepository)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GenerateOperation(ApiDescription apiDescription, SchemaRepository schemaRepository)
-         --- End of inner exception stack trace ---
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GenerateOperation(ApiDescription apiDescription, SchemaRepository schemaRepository)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GenerateOperations(IEnumerable`1 apiDescriptions, SchemaRepository schemaRepository)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GeneratePaths(IEnumerable`1 apiDescriptions, SchemaRepository schemaRepository)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GetSwaggerDocumentWithoutFilters(String documentName, String host, String basePath)
-         at Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenerator.GetSwaggerAsync(String documentName, String host, String basePath)
-         at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
-         at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+AdminProducts.jsx:
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-Program.cs:
-using OnlineShopping.Models;
-using OnlineShopping.Repos;
+function AdminProducts() {
+    const [products, setProducts] = useState([]);
+    const [product, setProduct] = useState({ productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
 
-var builder = WebApplication.CreateBuilder(args);
+    useEffect(() => {
+        fetchAllProducts();
+    }, []);
 
-// Add services to the container.
+    const fetchAllProducts = () => {
+        axios.get("http://localhost:5183/api/Product/AllProducts")
+            .then(response => {
+                setProducts(response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching products:', error);
+            });
+    };
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IUserRepo, EFUserRepo>();
-builder.Services.AddScoped<IProductRepo, EFProductRepo>();
-builder.Services.AddScoped<ICategoryRepo, EFCategoryRepo>();
-builder.Services.AddScoped<ICartRepo, EFCartRepo>();
-builder.Services.AddScoped<IOrderRepo, EFOrderRepo>();
-builder.Services.AddScoped<IWishListRepo, EFWishListRepo>();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("MyPolicy", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-});
+    const deleteProduct = (productId) => {
+        axios.delete(`http://localhost:5183/api/Product/${productId}`)
+            .then(response => {
+                alert("Product deleted");
+                fetchAllProducts();
+            })
+            .catch(error => {
+                console.error('Error deleting product:', error);
+                alert("Failed to delete product. Please try again.");
+            });
+    };
 
-builder.Services.AddDbContext<OnlineShoppingDbContext>();
-var app = builder.Build();
+    const addProduct = async () => {
+        const formData = new FormData();
+        formData.append("productName", product.productName);
+        formData.append("description", product.description);
+        formData.append("price", product.price);
+        formData.append("categoryId", product.categoryId);
+        formData.append("fileName", product.fileName);
+        formData.append("productImage", product.productImage);
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+        try {
+            await axios.post("http://localhost:5183/api/Product", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            alert('Product added');
+            fetchAllProducts();
+            setProduct({ productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
+        } catch (error) {
+            console.error('Error adding product:', error);
+            alert('Failed to add product. Please try again.');
+        }
+    };
+
+    const handleImageChange = (event) => {
+        setProduct(prev => ({ ...prev, productImage: event.target.files[0], fileName: event.target.files[0].name }));
+    };
+
+    return (
+        <div className="container mt-4">
+            <h2 className="main-heading">Product Form</h2>
+            <div className="underline"></div>
+            <form>
+                <div className="mb-3">
+                    <label htmlFor="productName" className="form-label">Product Name:</label>
+                    <input type="text" className="form-control" id="productName" value={product.productName}
+                        onChange={(e) => setProduct(prev => ({ ...prev, productName: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="description" className="form-label">Description:</label>
+                    <input type="text" className="form-control" id="description" value={product.description}
+                        onChange={(e) => setProduct(prev => ({ ...prev, description: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="price" className="form-label">Price:</label>
+                    <input type="number" className="form-control" id="price" value={product.price}
+                        onChange={(e) => setProduct(prev => ({ ...prev, price: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="categoryId" className="form-label">Category ID:</label>
+                    <input type="number" className="form-control" id="categoryId" value={product.categoryId}
+                        onChange={(e) => setProduct(prev => ({ ...prev, categoryId: e.target.value }))} />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="productImage" className="form-label">Product Image:</label>
+                    <input type="file" className="form-control" id="productImage" onChange={handleImageChange} />
+                </div>
+                <button type="button" className="btn btn-primary" onClick={fetchAllProducts}>Show All Products</button>
+                <button type="button" className="btn btn-success ms-2" onClick={addProduct}>Add Product</button>
+            </form>
+            <h3 className="mt-4">List of Products</h3>
+            <table className="table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Category ID</th>
+                        <th>File Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {products.map(product => (
+                        <tr key={product.productId}>
+                            <td>{product.productName}</td>
+                            <td>{product.description}</td>
+                            <td>{product.price}</td>
+                            <td>{product.categoryId}</td>
+                            <td>{product.fileName}</td>
+                            <td>
+                                <button type="button" className="btn btn-danger" onClick={() => deleteProduct(product.productId)}>Delete</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
 }
 
-app.UseHttpsRedirection();
-app.UseCors("MyPolicy");
-app.UseAuthentication();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+export default AdminProducts;
+When i upload the image, i get this error:
+Failed to load resource: the server responded with a status of 400 (Bad Request)
+AdminProducts.jsx:53  Error adding product: AxiosError
