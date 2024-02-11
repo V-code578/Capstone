@@ -175,6 +175,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OnlineShopping.Models;
 using OnlineShopping.Repos;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace webapi.Controllers
 {
@@ -182,18 +185,25 @@ namespace webapi.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        IProductRepo productRepo;
+        private readonly IProductRepo _productRepo;
 
         public ProductController(IProductRepo repo)
         {
-             productRepo = repo;
+            _productRepo = repo;
         }
 
         [HttpGet("AllProducts")]
         public async Task<ActionResult> GetAllProducts()
         {
-            List<Product> products = await productRepo.GetAllProducts();
-            return Ok(products);
+            try
+            {
+                List<Product> products = await _productRepo.GetAllProducts();
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpGet("ProductById/{productId}")]
@@ -201,7 +211,7 @@ namespace webapi.Controllers
         {
             try
             {
-                Product product = await productRepo.GetProductById(productId);
+                Product product = await _productRepo.GetProductById(productId);
                 return Ok(product);
             }
             catch (Exception ex)
@@ -215,7 +225,7 @@ namespace webapi.Controllers
         {
             try
             {
-                Product product = await productRepo.GetProductByName(productName);
+                Product product = await _productRepo.GetProductByName(productName);
                 return Ok(product);
             }
             catch (Exception ex)
@@ -229,8 +239,8 @@ namespace webapi.Controllers
         {
             try
             {
-                List<Product> product = await productRepo.GetProductsByCategory(categoryId);
-                return Ok(product);
+                List<Product> products = await _productRepo.GetProductsByCategory(categoryId);
+                return Ok(products);
             }
             catch (Exception ex)
             {
@@ -239,46 +249,66 @@ namespace webapi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddProduct([FromForm] IFormFile imageFile, [FromForm] Product product)
+        public async Task<ActionResult> AddProduct([FromForm] IFormFile productImage, [FromForm] Product product)
         {
-            if (imageFile != null)
+            try
             {
-                using (var memoryStream = new MemoryStream())
+                if (productImage != null)
                 {
-                    await imageFile.CopyToAsync(memoryStream);
-                    product.ProductImage = memoryStream.ToArray();
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await productImage.CopyToAsync(memoryStream);
+                        product.ProductImage = memoryStream.ToArray();
+                    }
                 }
+
+                await _productRepo.AddProduct(product);
+                return Created($"api/product/{product.ProductId}", product);
             }
-
-            await productRepo.AddProduct(product);
-            return Created($"api/product/{product.ProductId}", product);
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
-
 
         [HttpPut("{productId}")]
-        public async Task<ActionResult> UpdateProduct(int productId, IFormFile imageFile, [FromForm] Product product)
+        public async Task<ActionResult> UpdateProduct(int productId, [FromForm] IFormFile productImage, [FromForm] Product product)
         {
-            if (imageFile != null)
+            try
             {
-                using (var memoryStream = new MemoryStream())
+                if (productImage != null)
                 {
-                    await imageFile.CopyToAsync(memoryStream);
-                    product.ProductImage = memoryStream.ToArray();
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await productImage.CopyToAsync(memoryStream);
+                        product.ProductImage = memoryStream.ToArray();
+                    }
                 }
-            }
 
-            await productRepo.UpdateProduct(productId, product);
-            return Ok(product);
+                await _productRepo.UpdateProduct(productId, product);
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
-
-        [HttpDelete]
+        [HttpDelete("{productId}")]
         public async Task<ActionResult> DeleteProduct(int productId)
         {
-            await productRepo.DeleteProduct(productId);
-            return Ok();
+            try
+            {
+                await _productRepo.DeleteProduct(productId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }
+
 
 Then Please implement the Front end web page using React JS and Bootstrap for the admin side to adding , updating, deleting, fetching all products, Fetching Single product using ProductId, Fetching Products using CategoryName.
