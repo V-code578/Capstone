@@ -168,3 +168,115 @@ const ImageUploader = () => {
 
 export default ImageUploader;
 Like this apply the update the code in AdminProduct.jsx and ProductController to perform How to upload the image to the database.
+
+
+AdminProduct.jsx:
+import React, { useState } from "react";
+import axios from "axios";
+
+const AdminProduct = () => {
+    const [productData, setProductData] = useState({
+        productName: "",
+        description: "",
+        price: 0,
+        categoryId: 0,
+        file: null,
+    });
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setProductData({
+            ...productData,
+            [name]: value,
+        });
+    };
+
+    const handleFileChange = (event) => {
+        setProductData({
+            ...productData,
+            file: event.target.files[0],
+        });
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append("productName", productData.productName);
+        formData.append("description", productData.description);
+        formData.append("price", productData.price);
+        formData.append("categoryId", productData.categoryId);
+        formData.append("file", productData.file);
+
+        try {
+            await axios.post("http://localhost:5094/api/Product", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            alert("Product added successfully!");
+        } catch (error) {
+            console.error("Error adding product:", error);
+            alert("Failed to add product. Please try again.");
+        }
+    };
+
+    return (
+        <div>
+            <h1>Add Product</h1>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Product Name:</label>
+                    <input type="text" name="productName" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Description:</label>
+                    <input type="text" name="description" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Price:</label>
+                    <input type="number" name="price" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Category ID:</label>
+                    <input type="number" name="categoryId" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Image:</label>
+                    <input type="file" onChange={handleFileChange} />
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    );
+};
+
+export default AdminProduct;
+
+ProductController.cs:
+[HttpPost]
+[Consumes("multipart/form-data")]
+public async Task<ActionResult> AddProduct([FromForm] IFormFile file, [FromForm] Product product)
+{
+    if (file == null || product == null)
+    {
+        return BadRequest();
+    }
+
+    try
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            await file.CopyToAsync(memoryStream);
+            product.ProductImage = memoryStream.ToArray();
+        }
+
+        await _productRepo.AddProduct(product);
+        return Created($"api/product/{product.ProductId}", product);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, ex.Message);
+    }
+}
+
