@@ -353,4 +353,45 @@ fail: Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddleware[1]
          at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
          at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
 
-Then Please implement the Front end web page using React JS and Bootstrap for the admin side to adding , updating, deleting, fetching all products, Fetching Single product using ProductId, Fetching Products using CategoryName.
+Program.cs:
+using OnlineShopping.Models;
+using OnlineShopping.Repos;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IUserRepo, EFUserRepo>();
+builder.Services.AddScoped<IProductRepo, EFProductRepo>();
+builder.Services.AddScoped<ICategoryRepo, EFCategoryRepo>();
+builder.Services.AddScoped<ICartRepo, EFCartRepo>();
+builder.Services.AddScoped<IOrderRepo, EFOrderRepo>();
+builder.Services.AddScoped<IWishListRepo, EFWishListRepo>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MyPolicy", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
+builder.Services.AddDbContext<OnlineShoppingDbContext>();
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseCors("MyPolicy");
+app.UseAuthentication();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
