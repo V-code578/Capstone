@@ -33,6 +33,8 @@ namespace OnlineShopping.Models
 
         public virtual Category? Category { get; set; }
 
+        public string FileName { get; set; }
+
         public byte[] ProductImage { get; set; } // New attribute for storing the image data
 
         public virtual ICollection<Cart> Carts { get; set; }
@@ -154,6 +156,7 @@ namespace OnlineShopping.Repos
                 product1.Description = product.Description;
                 product1.Price = product.Price;
                 product1.CategoryId = product.CategoryId;
+                product1.FileName = product.FileName;
                 product1.ProductImage = product.ProductImage;
                 await ctx.SaveChangesAsync();
             }
@@ -165,6 +168,7 @@ namespace OnlineShopping.Repos
         }
     }
 }
+
 
 ProductController.cs:
 using Microsoft.AspNetCore.Http;
@@ -235,7 +239,7 @@ namespace webapi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddProduct(IFormFile imageFile, [FromForm] Product product)
+        public async Task<ActionResult> AddProduct([FromForm] IFormFile imageFile, [FromForm] Product product)
         {
             if (imageFile != null)
             {
