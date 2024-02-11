@@ -39,15 +39,15 @@ function AdminProducts() {
                 'Content-Type': 'multipart/form-data'
             }
         })
-        .then(response => {
-            alert('Product updated');
-            fetchAllProducts();
-            setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, productImage: null });
-        })
-        .catch(error => {
-            console.error('Error updating product:', error);
-            alert('Failed to update product. Please try again.');
-        });
+            .then(response => {
+                alert('Product updated');
+                fetchAllProducts();
+                setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, productImage: null });
+            })
+            .catch(error => {
+                console.error('Error updating product:', error);
+                alert('Failed to update product. Please try again.');
+            });
     };
 
     const addProduct = () => {
@@ -63,15 +63,15 @@ function AdminProducts() {
                 'Content-Type': 'multipart/form-data'
             }
         })
-        .then(response => {
-            alert('Product added');
-            fetchAllProducts();
-            setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: null });
-        })
-        .catch(error => {
-            console.error('Error adding product:', error);
-            alert('Failed to add product. Please try again.');
-        });
+            .then(response => {
+                alert('Product added');
+                fetchAllProducts();
+                setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: "" });
+            })
+            .catch(error => {
+                console.error('Error adding product:', error);
+                alert('Failed to add product. Please try again.');
+            });
     };
 
     const handleImageChange = (event) => {
@@ -139,4 +139,3 @@ function AdminProducts() {
 }
 
 export default AdminProducts;
-                        
