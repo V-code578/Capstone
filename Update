@@ -153,3 +153,31 @@ function AdminProducts() {
 }
 
 export default AdminProducts;
+Failed to load resource: the server responded with a status of 400 (Bad Request)
+AdminProducts.jsx:53 
+ Error adding product: 
+AxiosError
+code
+: 
+"ERR_BAD_REQUEST"
+config
+: 
+{transitional: {…}, adapter: Array(2), transformRequest: Array(1), transformResponse: Array(1), timeout: 0, …}
+message
+: 
+"Request failed with status code 400"
+name
+: 
+"AxiosError"
+request
+: 
+XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 0, withCredentials: false, upload: XMLHttpRequestUpload, …}
+response
+: 
+{data: {…}, status: 400, statusText: 'Bad Request', headers: AxiosHeaders, config: {…}, …}
+stack
+: 
+"AxiosError: Request failed with status code 400\n    at settle (https://localhost:5173/node_modules/.vite/deps/axios.js?v=f36f6891:1203:12)\n    at XMLHttpRequest.onloadend (https://localhost:5173/node_modules/.vite/deps/axios.js?v=f36f6891:1420:7)\n    at Axios.request (https://localhost:5173/node_modules/.vite/deps/axios.js?v=f36f6891:1780:41)\n    at async addProduct (https://localhost:5173/src/AdminProducts.jsx?t=1707667696579:52:7)"
+[[Prototype]]
+: 
+Error
