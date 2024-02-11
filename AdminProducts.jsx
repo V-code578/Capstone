@@ -3,35 +3,42 @@ import axios from 'axios';
 
 function AdminProducts() {
     const [products, setProducts] = useState([]);
-    const [product, setProduct] = useState({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: null });
+    const [product, setProduct] = useState({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
 
     useEffect(() => {
         fetchAllProducts();
     }, []);
 
     const fetchAllProducts = () => {
-        fetch("http://localhost:5183/api/Product/AllProducts")
-            .then(result => result.json())
-            .then(result => {
-                setProducts(result);
+        axios.get("http://localhost:5183/api/Product/AllProducts")
+            .then(response => {
+                setProducts(response.data);
+            })
+            .catch(error => {
+                console.error('Error fetching products:', error);
             });
     };
 
     const deleteProduct = (productId) => {
-        fetch('http://localhost:5183/api/Product/' + productId, {
-            method: 'DELETE',
-        }).then(result => result.text()).then(result => {
-            alert("Product deleted");
-            setProducts(products.filter(p => p.productId !== productId));
-        });
+        axios.delete(`http://localhost:5183/api/Product/${productId}`)
+            .then(response => {
+                alert("Product deleted");
+                setProducts(products.filter(p => p.productId !== productId));
+            })
+            .catch(error => {
+                console.error('Error deleting product:', error);
+                alert("Failed to delete product. Please try again.");
+            });
     };
 
     const updateProduct = (productId) => {
         const formData = new FormData();
+        formData.append("productId", productId);
         formData.append("productName", product.productName);
         formData.append("description", product.description);
         formData.append("price", product.price);
         formData.append("categoryId", product.categoryId);
+        formData.append("fileName", product.fileName);
         formData.append("productImage", product.productImage);
 
         axios.put(`http://localhost:5183/api/Product/${productId}`, formData, {
@@ -42,7 +49,7 @@ function AdminProducts() {
             .then(response => {
                 alert('Product updated');
                 fetchAllProducts();
-                setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, productImage: null });
+                setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, fileName: "", productImage: null });
             })
             .catch(error => {
                 console.error('Error updating product:', error);
@@ -56,6 +63,7 @@ function AdminProducts() {
         formData.append("description", product.description);
         formData.append("price", product.price);
         formData.append("categoryId", product.categoryId);
+        formData.append("fileName", product.fileName);
         formData.append("productImage", product.productImage);
 
         axios.post("http://localhost:5183/api/Product", formData, {
@@ -66,7 +74,7 @@ function AdminProducts() {
             .then(response => {
                 alert('Product added');
                 fetchAllProducts();
-                setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, productImage: "" });
+                setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
             })
             .catch(error => {
                 console.error('Error adding product:', error);
@@ -83,11 +91,6 @@ function AdminProducts() {
             <h2 className="main-heading">Product Form</h2>
             <div className="underline"></div>
             <form>
-                <div className="mb-3">
-                    <label htmlFor="productId" className="form-label">Product Id:</label>
-                    <input type="text" className="form-control" id="productId" value={product.productId}
-                        onChange={(e) => setProduct(prev => ({ ...prev, productId: e.target.value }))} />
-                </div>
                 <div className="mb-3">
                     <label htmlFor="productName" className="form-label">Product Name:</label>
                     <input type="text" className="form-control" id="productName" value={product.productName}
@@ -109,6 +112,11 @@ function AdminProducts() {
                         onChange={(e) => setProduct(prev => ({ ...prev, categoryId: e.target.value }))} />
                 </div>
                 <div className="mb-3">
+                    <label htmlFor="fileName" className="form-label">File Name:</label>
+                    <input type="text" className="form-control" id="fileName" value={product.fileName}
+                        onChange={(e) => setProduct(prev => ({ ...prev, fileName: e.target.value }))} />
+                </div>
+                <div className="mb-3">
                     <label htmlFor="productImage" className="form-label">Product Image:</label>
                     <input type="file" className="form-control" id="productImage" onChange={handleImageChange} />
                 </div>
@@ -120,13 +128,22 @@ function AdminProducts() {
             <table className="table">
                 <thead>
                     <tr>
-                        <th>Product Name</th><th>Description</th><th>Price</th><th>Category ID</th><th>Action</th>
+                        <th>Product Name</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Category ID</th>
+                        <th>File Name</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {products.map(product => (
                         <tr key={product.productId}>
-                            <td>{product.productName}</td><td>{product.description}</td><td>{product.price}</td><td>{product.categoryId}</td>
+                            <td>{product.productName}</td>
+                            <td>{product.description}</td>
+                            <td>{product.price}</td>
+                            <td>{product.categoryId}</td>
+                            <td>{product.fileName}</td>
                             <td>
                                 <button type="button" className="btn btn-danger" onClick={() => deleteProduct(product.productId)}>Delete</button>
                             </td>
