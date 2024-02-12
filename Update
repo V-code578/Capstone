@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 
 const AdminProduct = () => {
   const [productData, setProductData] = useState({
@@ -33,27 +32,23 @@ const AdminProduct = () => {
     formData.append("description", productData.description);
     formData.append("price", productData.price);
     formData.append("categoryId", productData.categoryId);
+    formData.append("file", productData.file);
 
-    // Convert file to byte array
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const buffer = e.target.result;
-      const bytes = new Uint8Array(buffer);
-      formData.append("file", bytes);
-      
-      try {
-        await axios.post("http://localhost:5094/api/Product", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        alert("Product added successfully!");
-      } catch (error) {
-        console.error("Error adding product:", error);
-        alert("Failed to add product. Please try again.");
+    try {
+      const response = await fetch("http://localhost:5094/api/Product", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add product.");
       }
-    };
-    reader.readAsArrayBuffer(productData.file);
+
+      alert("Product added successfully!");
+    } catch (error) {
+      console.error("Error adding product:", error);
+      alert("Failed to add product. Please try again.");
+    }
   };
 
   return (
@@ -87,6 +82,7 @@ const AdminProduct = () => {
 };
 
 export default AdminProduct;
+
 
 [HttpPost]
 [Consumes("multipart/form-data")]
