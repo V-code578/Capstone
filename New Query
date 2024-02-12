@@ -6,7 +6,7 @@ const AdminProducts = () => {
     description: "",
     price: 0,
     categoryId: 0,
-    file: null, // Revert back to file state
+    filePath: "", // Add new state for file path
   });
 
   const handleInputChange = (event) => {
@@ -20,24 +20,20 @@ const AdminProducts = () => {
   const handleFileChange = (event) => {
     setProductData({
       ...productData,
-      file: event.target.files[0], // Update file state
+      filePath: event.target.value, // Update file path
     });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const formData = new FormData();
-    formData.append("productName", productData.productName);
-    formData.append("description", productData.description);
-    formData.append("price", productData.price);
-    formData.append("categoryId", productData.categoryId);
-    formData.append("file", productData.file); // Append file to FormData
-
     try {
       const response = await fetch("http://localhost:5183/api/Product", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(productData),
       });
 
       if (response.ok) {
@@ -48,7 +44,7 @@ const AdminProducts = () => {
           description: "",
           price: 0,
           categoryId: 0,
-          file: null,
+          filePath: "",
         });
       } else {
         throw new Error("Failed to add product. Please try again.");
@@ -100,8 +96,13 @@ const AdminProducts = () => {
           />
         </div>
         <div>
-          <label>Image:</label>
-          <input type="file" onChange={handleFileChange} />
+          <label>Image File Path:</label>
+          <input
+            type="text"
+            name="filePath"
+            value={productData.filePath}
+            onChange={handleFileChange}
+          />
         </div>
         <button type="submit">Submit</button>
       </form>
@@ -110,57 +111,3 @@ const AdminProducts = () => {
 };
 
 export default AdminProducts;
-
-Productcontroller:
-
-[HttpPost]
-[Consumes("multipart/form-data")]
-public async Task<ActionResult> AddProduct([FromForm] IFormFile file, [FromForm] Product product)
-{
-    if (file == null || product == null)
-    {
-        return BadRequest();
-    }
-
-    try
-    {
-        var imagePath = "path/to/your/images/" + file.FileName; // Construct image path
-        using (var stream = new FileStream(imagePath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        product.ImagePath = imagePath;
-        await _productRepo.AddProduct(product);
-        return Created($"api/product/{product.ProductId}", product);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, ex.Message);
-    }
-}
-
-[HttpPut("{productId}")]
-public async Task<ActionResult> UpdateProduct(int productId, [FromForm] IFormFile productImage, [FromForm] Product product)
-{
-    try
-    {
-        if (productImage != null)
-        {
-            var imagePath = "path/to/your/images/" + productImage.FileName; // Construct image path
-            using (var stream = new FileStream(imagePath, FileMode.Create))
-            {
-                await productImage.CopyToAsync(stream);
-            }
-
-            product.ImagePath = imagePath;
-        }
-
-        await _productRepo.UpdateProduct(productId, product);
-        return Ok(product);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, ex.Message);
-    }
-}
