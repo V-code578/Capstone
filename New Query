@@ -1,3 +1,105 @@
+// ...
+
+[HttpPost]
+[Consumes("multipart/form-data")]
+public async Task<ActionResult> AddProduct([FromForm] IFormFile file, [FromForm] Product product)
+{
+    if (file == null || product == null)
+    {
+        return BadRequest();
+    }
+
+    try
+    {
+        // Save the file to a local path
+        var filePath = Path.Combine("YourLocalImagePath", file.FileName);
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        // Set the file path in the product
+        product.ImagePath = filePath;
+
+        await _productRepo.AddProduct(product);
+        return Created($"api/product/{product.ProductId}", product);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, ex.Message);
+    }
+}
+
+[HttpPut("{productId}")]
+public async Task<ActionResult> UpdateProduct(int productId, [FromForm] IFormFile productImage, [FromForm] Product product)
+{
+    try
+    {
+        if (productImage != null)
+        {
+            // Save the new file to a local path
+            var filePath = Path.Combine("YourLocalImagePath", productImage.FileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await productImage.CopyToAsync(stream);
+            }
+
+            // Set the new file path in the product
+            product.ImagePath = filePath;
+        }
+
+        await _productRepo.UpdateProduct(productId, product);
+        return Ok(product);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, ex.Message);
+    }
+}
+
+// ...
+
+// ...
+
+const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData();
+    formData.append("productName", productData.productName);
+    formData.append("description", productData.description);
+    formData.append("price", productData.price);
+    formData.append("categoryId", productData.categoryId);
+    formData.append("file", productData.file); // Append the file directly
+
+    try {
+        const response = await fetch("http://localhost:5183/api/Product", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (response.ok) {
+            alert("Product added successfully!");
+            // Clear form fields after successful submission
+            setProductData({
+                productName: "",
+                description: "",
+                price: 0,
+                categoryId: 0,
+                file: null,
+            });
+        } else {
+            throw new Error("Failed to add product. Please try again.");
+        }
+    } catch (error) {
+        console.error("Error adding product:", error);
+        alert("Failed to add product. Please try again.");
+    }
+};
+
+// ...
+
+
+
 import React, { useState } from "react";
 
 const AdminProducts = () => {
@@ -6,7 +108,7 @@ const AdminProducts = () => {
     description: "",
     price: 0,
     categoryId: 0,
-    filePath: "", // Add new state for file path
+    file: null,
   });
 
   const handleInputChange = (event) => {
@@ -20,20 +122,24 @@ const AdminProducts = () => {
   const handleFileChange = (event) => {
     setProductData({
       ...productData,
-      filePath: event.target.value, // Update file path
+      file: event.target.files[0],
     });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const formData = new FormData();
+    formData.append("productName", productData.productName);
+    formData.append("description", productData.description);
+    formData.append("price", productData.price);
+    formData.append("categoryId", productData.categoryId);
+    formData.append("file", productData.file); // Append the file directly
+
     try {
       const response = await fetch("http://localhost:5183/api/Product", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productData),
+        body: formData,
       });
 
       if (response.ok) {
@@ -44,7 +150,7 @@ const AdminProducts = () => {
           description: "",
           price: 0,
           categoryId: 0,
-          filePath: "",
+          file: null,
         });
       } else {
         throw new Error("Failed to add product. Please try again.");
@@ -96,13 +202,8 @@ const AdminProducts = () => {
           />
         </div>
         <div>
-          <label>Image File Path:</label>
-          <input
-            type="text"
-            name="filePath"
-            value={productData.filePath}
-            onChange={handleFileChange}
-          />
+          <label>Image:</label>
+          <input type="file" onChange={handleFileChange} />
         </div>
         <button type="submit">Submit</button>
       </form>
@@ -111,3 +212,4 @@ const AdminProducts = () => {
 };
 
 export default AdminProducts;
+
