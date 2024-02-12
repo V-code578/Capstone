@@ -1,8 +1,92 @@
+import React, { useState } from "react";
+import axios from "axios";
+
+const AdminProduct = () => {
+    const [productData, setProductData] = useState({
+        productName: "",
+        description: "",
+        price: 0,
+        categoryId: 0,
+        file: null,
+    });
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setProductData({
+            ...productData,
+            [name]: value,
+        });
+    };
+
+    const handleFileChange = (event) => {
+        setProductData({
+            ...productData,
+            file: event.target.files[0],
+        });
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append("productName", productData.productName);
+        formData.append("description", productData.description);
+        formData.append("price", productData.price);
+        formData.append("categoryId", productData.categoryId);
+        formData.append("file", productData.file);
+
+        try {
+            await axios.post("http://localhost:5094/api/Product", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            alert("Product added successfully!");
+        } catch (error) {
+            console.error("Error adding product:", error);
+            alert("Failed to add product. Please try again.");
+        }
+    };
+
+    return (
+        <div>
+            <h1>Add Product</h1>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Product Name:</label>
+                    <input type="text" name="productName" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Description:</label>
+                    <input type="text" name="description" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Price:</label>
+                    <input type="number" name="price" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Category ID:</label>
+                    <input type="number" name="categoryId" onChange={handleInputChange} />
+                </div>
+                <div>
+                    <label>Image:</label>
+                    <input type="file" onChange={handleFileChange} />
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    );
+};
+
+export default AdminProduct;
+
+
+
 [HttpPost]
 [Consumes("multipart/form-data")]
-public async Task<ActionResult> AddProduct([FromForm] IFormFile productImage, [FromForm] Product product)
+public async Task<ActionResult> AddProduct([FromForm] IFormFile file, [FromForm] Product product)
 {
-    if (productImage == null || product == null)
+    if (file == null || product == null)
     {
         return BadRequest();
     }
@@ -11,9 +95,8 @@ public async Task<ActionResult> AddProduct([FromForm] IFormFile productImage, [F
     {
         using (var memoryStream = new MemoryStream())
         {
-            await productImage.CopyToAsync(memoryStream);
-            product.ProductImage = memoryStream.ToArray();
-            product.ProductFileName = productImage.FileName;
+            await file.CopyToAsync(memoryStream);
+            product.ImageData = memoryStream.ToArray();
         }
 
         await _productRepo.AddProduct(product);
@@ -24,160 +107,3 @@ public async Task<ActionResult> AddProduct([FromForm] IFormFile productImage, [F
         return StatusCode(500, ex.Message);
     }
 }
-
-
-
-AdminProducts.jsx:
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-function AdminProducts() {
-    const [products, setProducts] = useState([]);
-    const [product, setProduct] = useState({ productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
-
-    useEffect(() => {
-        fetchAllProducts();
-    }, []);
-
-    const fetchAllProducts = () => {
-        axios.get("http://localhost:5183/api/Product/AllProducts")
-            .then(response => {
-                setProducts(response.data);
-            })
-            .catch(error => {
-                console.error('Error fetching products:', error);
-            });
-    };
-
-    const deleteProduct = (productId) => {
-        axios.delete(`http://localhost:5183/api/Product/${productId}`)
-            .then(response => {
-                alert("Product deleted");
-                fetchAllProducts();
-            })
-            .catch(error => {
-                console.error('Error deleting product:', error);
-                alert("Failed to delete product. Please try again.");
-            });
-    };
-
-    const addProduct = async () => {
-        const formData = new FormData();
-        formData.append("productName", product.productName);
-        formData.append("description", product.description);
-        formData.append("price", product.price);
-        formData.append("categoryId", product.categoryId);
-        formData.append("fileName", product.fileName);
-        formData.append("productImage", product.productImage);
-
-        try {
-            await axios.post("http://localhost:5183/api/Product", formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            alert('Product added');
-            fetchAllProducts();
-            setProduct({ productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
-        } catch (error) {
-            console.error('Error adding product:', error);
-            alert('Failed to add product. Please try again.');
-        }
-    };
-
-    const handleImageChange = (event) => {
-        setProduct(prev => ({ ...prev, productImage: event.target.files[0], fileName: event.target.files[0].name }));
-    };
-
-    return (
-        <div className="container mt-4">
-            <h2 className="main-heading">Product Form</h2>
-            <div className="underline"></div>
-            <form>
-                <div className="mb-3">
-                    <label htmlFor="productName" className="form-label">Product Name:</label>
-                    <input type="text" className="form-control" id="productName" value={product.productName}
-                        onChange={(e) => setProduct(prev => ({ ...prev, productName: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="description" className="form-label">Description:</label>
-                    <input type="text" className="form-control" id="description" value={product.description}
-                        onChange={(e) => setProduct(prev => ({ ...prev, description: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="price" className="form-label">Price:</label>
-                    <input type="number" className="form-control" id="price" value={product.price}
-                        onChange={(e) => setProduct(prev => ({ ...prev, price: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="categoryId" className="form-label">Category ID:</label>
-                    <input type="number" className="form-control" id="categoryId" value={product.categoryId}
-                        onChange={(e) => setProduct(prev => ({ ...prev, categoryId: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="productImage" className="form-label">Product Image:</label>
-                    <input type="file" className="form-control" id="productImage" onChange={handleImageChange} />
-                </div>
-                <button type="button" className="btn btn-primary" onClick={fetchAllProducts}>Show All Products</button>
-                <button type="button" className="btn btn-success ms-2" onClick={addProduct}>Add Product</button>
-            </form>
-            <h3 className="mt-4">List of Products</h3>
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Category ID</th>
-                        <th>File Name</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {products.map(product => (
-                        <tr key={product.productId}>
-                            <td>{product.productName}</td>
-                            <td>{product.description}</td>
-                            <td>{product.price}</td>
-                            <td>{product.categoryId}</td>
-                            <td>{product.fileName}</td>
-                            <td>
-                                <button type="button" className="btn btn-danger" onClick={() => deleteProduct(product.productId)}>Delete</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
-export default AdminProducts;
-Failed to load resource: the server responded with a status of 400 (Bad Request)
-AdminProducts.jsx:53 
- Error adding product: 
-AxiosError
-code
-: 
-"ERR_BAD_REQUEST"
-config
-: 
-{transitional: {…}, adapter: Array(2), transformRequest: Array(1), transformResponse: Array(1), timeout: 0, …}
-message
-: 
-"Request failed with status code 400"
-name
-: 
-"AxiosError"
-request
-: 
-XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 0, withCredentials: false, upload: XMLHttpRequestUpload, …}
-response
-: 
-{data: {…}, status: 400, statusText: 'Bad Request', headers: AxiosHeaders, config: {…}, …}
-stack
-: 
-"AxiosError: Request failed with status code 400\n    at settle (https://localhost:5173/node_modules/.vite/deps/axios.js?v=f36f6891:1203:12)\n    at XMLHttpRequest.onloadend (https://localhost:5173/node_modules/.vite/deps/axios.js?v=f36f6891:1420:7)\n    at Axios.request (https://localhost:5173/node_modules/.vite/deps/axios.js?v=f36f6891:1780:41)\n    at async addProduct (https://localhost:5173/src/AdminProducts.jsx?t=1707667696579:52:7)"
-[[Prototype]]
-: 
-Error
