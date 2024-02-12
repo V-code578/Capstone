@@ -436,5 +436,44 @@ function AdminProducts() {
 }
 
 export default AdminProducts;
+OnlineShoppingDbContext.cs:
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using static Azure.Core.HttpHeader;
+
+namespace OnlineShopping.Models
+{
+    public class OnlineShoppingDbContext : DbContext
+    {
+
+        public OnlineShoppingDbContext()
+        {
+            
+        }
+
+        public OnlineShoppingDbContext(DbContextOptions<OnlineShoppingDbContext> options) : base(options)
+        {
+            
+        }
+
+        public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<Category> Categories { get; set; }
+        public virtual DbSet<Product> Products { get; set; }
+        public virtual DbSet<Cart> Carts { get; set; }
+        public virtual DbSet<WishList> WishLists { get; set; }
+        public virtual DbSet<Order> Orders { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer("data source=(localdb)\\MSSQLLocalDB; database=OnlineShoppingDB; integrated security=true");
+        }
+    }
+}
+
 I have given code from backend to frontend, When I upload the image submit form it gives an error like "Failed to load resource: the server responded with a status of 400 (Bad Request)"
 No the data does not store in the database, please check all the codes. After submit the form, The data was cleared. but it doesnot store in the database. Please Provide the correct files with perfect code.
+
