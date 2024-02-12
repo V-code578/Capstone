@@ -1,198 +1,4 @@
-import React, { useState } from "react";
-import axios from "axios";
-
-const ImageUploader = () => {
-    const [selectedFile, setSelectedFile] = useState(null);
-
-    const handleFileChange = (event) => {
-        setSelectedFile(event.target.files[0]);
-    };
-
-    const handleUpload = async () => {
-        const formData = new FormData();
-        formData.append("image", selectedFile);
-
-        try {
-            await axios.post("http://localhost:5094/api/Image", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-            alert("Image uploaded successfully!");
-        } catch (error) {
-            console.error("Error uploading image:", error);
-            alert("Failed to upload image. Please try again.");
-        }
-    };
-
-    return (
-        <div>
-            <h1>Image Uploader</h1>
-            <input type="file" onChange={handleFileChange} />
-            <button onClick={handleUpload}>Upload</button>
-        </div>
-    );
-};
-
-export default ImageUploader;                                                 Like this above file update the code in below file also:                     import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-function AdminProducts() {
-    const [products, setProducts] = useState([]);
-    const [product, setProduct] = useState({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
-
-    useEffect(() => {
-        fetchAllProducts();
-    }, []);
-
-    const fetchAllProducts = () => {
-        axios.get("http://localhost:5183/api/Product/AllProducts")
-            .then(response => {
-                setProducts(response.data);
-            })
-            .catch(error => {
-                console.error('Error fetching products:', error);
-            });
-    };
-
-    const deleteProduct = (productId) => {
-        axios.delete(`http://localhost:5183/api/Product/${productId}`)
-            .then(response => {
-                alert("Product deleted");
-                setProducts(products.filter(p => p.productId !== productId));
-            })
-            .catch(error => {
-                console.error('Error deleting product:', error);
-                alert("Failed to delete product. Please try again.");
-            });
-    };
-
-    const updateProduct = (productId) => {
-        const formData = new FormData();
-        formData.append("productId", productId);
-        formData.append("productName", product.productName);
-        formData.append("description", product.description);
-        formData.append("price", product.price);
-        formData.append("categoryId", product.categoryId);
-        formData.append("fileName", product.fileName);
-        formData.append("productImage", product.productImage);
-
-        axios.put(`http://localhost:5183/api/Product/${productId}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-            .then(response => {
-                alert('Product updated');
-                fetchAllProducts();
-                setProduct({ productId: 0, productName: '', description: '', price: 0, categoryId: 0, fileName: "", productImage: null });
-            })
-            .catch(error => {
-                console.error('Error updating product:', error);
-                alert('Failed to update product. Please try again.');
-            });
-    };
-
-    const addProduct = () => {
-        const formData = new FormData();
-        formData.append("productName", product.productName);
-        formData.append("description", product.description);
-        formData.append("price", product.price);
-        formData.append("categoryId", product.categoryId);
-        formData.append("fileName", product.fileName);
-        formData.append("productImage", product.productImage);
-
-        axios.post("http://localhost:5183/api/Product", formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-            .then(response => {
-                alert('Product added');
-                fetchAllProducts();
-                setProduct({ productId: 0, productName: "", description: "", price: 0, categoryId: 0, fileName: "", productImage: null });
-            })
-            .catch(error => {
-                console.error('Error adding product:', error);
-                alert('Failed to add product. Please try again.');
-            });
-    };
-
-    const handleImageChange = (event) => {
-        setProduct(prev => ({ ...prev, productImage: event.target.files[0] }));
-    };
-
-    return (
-        <div className="container mt-4">
-            <h2 className="main-heading">Product Form</h2>
-            <div className="underline"></div>
-            <form>
-                <div className="mb-3">
-                    <label htmlFor="productName" className="form-label">Product Name:</label>
-                    <input type="text" className="form-control" id="productName" value={product.productName}
-                        onChange={(e) => setProduct(prev => ({ ...prev, productName: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="description" className="form-label">Description:</label>
-                    <input type="text" className="form-control" id="description" value={product.description}
-                        onChange={(e) => setProduct(prev => ({ ...prev, description: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="price" className="form-label">Price:</label>
-                    <input type="number" className="form-control" id="price" value={product.price}
-                        onChange={(e) => setProduct(prev => ({ ...prev, price: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="categoryId" className="form-label">Category ID:</label>
-                    <input type="number" className="form-control" id="categoryId" value={product.categoryId}
-                        onChange={(e) => setProduct(prev => ({ ...prev, categoryId: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="fileName" className="form-label">File Name:</label>
-                    <input type="text" className="form-control" id="fileName" value={product.fileName}
-                        onChange={(e) => setProduct(prev => ({ ...prev, fileName: e.target.value }))} />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="productImage" className="form-label">Product Image:</label>
-                    <input type="file" className="form-control" id="productImage" onChange={handleImageChange} />
-                </div>
-                <button type="button" className="btn btn-primary" onClick={fetchAllProducts}>Show All Products</button>
-                <button type="button" className="btn btn-success ms-2" onClick={addProduct}>Add Product</button>
-                <button type="button" className="btn btn-warning ms-2" onClick={() => updateProduct(product.productId)}>Update Product</button>
-            </form>
-            <h3 className="mt-4">List of Products</h3>
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Category ID</th>
-                        <th>File Name</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {products.map(product => (
-                        <tr key={product.productId}>
-                            <td>{product.productName}</td>
-                            <td>{product.description}</td>
-                            <td>{product.price}</td>
-                            <td>{product.categoryId}</td>
-                            <td>{product.fileName}</td>
-                            <td>
-                                <button type="button" className="btn btn-danger" onClick={() => deleteProduct(product.productId)}>Delete</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
-export default AdminProducts;                                                                                                                                                                           
-What we need to do is only one field is given, i.e., Upload image, when we upload the image in AdminProducts.jsx, the image name will be stored in ProductFilename column, The image will be converted into byte array format and store in ProductImage column for reference see the Product.cs model.                            
+Product.cs:
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -203,45 +9,159 @@ using System.Threading.Tasks;
 
 namespace OnlineShopping.Models
 {
-    [Table("Product")]
-    public class Product
+  [Table("Product")]
+  public class Product
+  {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int ProductId { get; set; }
+
+    [Required]
+    [StringLength(30)] // Adjust the length as needed
+    public string ProductName { get; set; }
+
+    [Required]
+    [StringLength(50)]
+    public string Description { get; set; }
+
+    [Required]
+    [Column(TypeName = "decimal(18, 2)")] // Adjust precision and scale as needed
+    public decimal Price { get; set; }
+
+    [ForeignKey("Category")]
+    public int CategoryId { get; set; }
+
+    public virtual Category? Category { get; set; }
+
+    public byte[] ImageData{ get; set; } // New attribute for storing the image data
+
+    public virtual ICollection<Cart> Carts { get; set; }
+    public virtual ICollection<WishList> WishLists { get; set; }
+
+    public Product()
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ProductId { get; set; }
-
-        [Required]
-        [StringLength(30)] // Adjust the length as needed
-        public string ProductName { get; set; }
-
-        [Required]
-        [StringLength(50)]
-        public string Description { get; set; }
-
-        [Required]
-        [Column(TypeName = "decimal(18, 2)")] // Adjust precision and scale as needed
-        public decimal Price { get; set; }
-
-        [ForeignKey("Category")]
-        public int CategoryId { get; set; }
-
-        public virtual Category? Category { get; set; }
-
-        public string ProductFileName { get; set; }
-        public byte[] ProductImage { get; set; } // New attribute for storing the image data
-
-        public virtual ICollection<Cart> Carts { get; set; }
-        public virtual ICollection<WishList> WishLists { get; set; }
-
-        public Product()
-        {
-            Carts = new HashSet<Cart>();
-            WishLists = new HashSet<WishList>();
-        }
+      Carts = new HashSet<Cart>();
+      WishLists = new HashSet<WishList>();
     }
+  }
 }
 
-If any mistakes is there in ProductController.cs  AddProduct method and Update method please rectify and correct the code:                                                                                           using Microsoft.AspNetCore.Http;
+Here the image is directly uploaded in byte form.
+
+EFProductRepo.cs:
+using Microsoft.EntityFrameworkCore;
+using OnlineShopping.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace OnlineShopping.Repos
+{
+  public class EFProductRepo : IProductRepo
+  {
+    OnlineShoppingDbContext ctx = new OnlineShoppingDbContext();
+    public async Task AddProduct(Product product)
+    {
+      ctx.Products.Add(product);
+      await ctx.SaveChangesAsync();
+    }
+
+    public async Task DeleteProduct(int productId)
+    {
+      try
+      {
+        Product product = await GetProductById(productId);
+        ctx.Products.Remove(product);
+        await ctx.SaveChangesAsync();
+      }
+      catch (Exception ex)
+      {
+
+        throw new Exception(ex.Message);
+      }
+    }
+
+    public async Task<List<Product>> GetAllProducts()
+    {
+      try
+      {
+        List<Product> products = await ctx.Products.ToListAsync();
+        return products;
+      }
+      catch (Exception ex)
+      {
+
+        throw new Exception(ex.Message);
+      }
+    }
+
+    public async Task<Product> GetProductById(int productId)
+    {
+      try
+      {
+        Product product = await (from p in ctx.Products where p.ProductId == productId select p).FirstAsync();
+        return product;
+      }
+      catch (Exception ex)
+      {
+
+        throw new Exception(ex.Message);
+      }
+    }
+
+    public async Task<Product> GetProductByName(string productName)
+    {
+      try
+      {
+        Product product = await (from p in ctx.Products where p.ProductName == productName select p).FirstAsync();
+        return product;
+      }
+      catch (Exception ex)
+      {
+
+        throw new Exception(ex.Message);
+      }
+    }
+
+    public async Task<List<Product>> GetProductsByCategory(int categoryId)
+    {
+      try
+      {
+        List<Product> products = await (from p in ctx.Products where p.CategoryId== categoryId select p).ToListAsync();
+        return products;
+      }
+      catch (Exception ex)
+      {
+
+        throw new Exception(ex.Message);
+      }
+    }
+
+    public async Task UpdateProduct(int productId, Product product)
+    {
+      try
+      {
+        Product product1 = await GetProductById(productId);
+        product1.ProductName = product.ProductName;
+        product1.Description = product.Description;
+        product1.Price = product.Price;
+        product1.CategoryId = product.CategoryId;
+        //product1.ProductFileName = product.ProductFileName;
+        //product1.ProductImage = product.ProductImage;
+        await ctx.SaveChangesAsync();
+      }
+      catch (Exception ex)
+      {
+
+        throw new Exception(ex.Message);
+      }
+    }
+  }
+}
+ProductController.cs:
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OnlineShopping.Models;
 using OnlineShopping.Repos;
@@ -251,135 +171,138 @@ using System.Threading.Tasks;
 
 namespace webapi.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductController : ControllerBase
+  [Route("api/[controller]")]
+  [ApiController]
+  public class ProductController : ControllerBase
+  {
+    private readonly IProductRepo _productRepo;
+
+    public ProductController(IProductRepo repo)
     {
-        private readonly IProductRepo _productRepo;
-
-        public ProductController(IProductRepo repo)
-        {
-            _productRepo = repo;
-        }
-
-        [HttpGet("AllProducts")]
-        public async Task<ActionResult> GetAllProducts()
-        {
-            try
-            {
-                List<Product> products = await _productRepo.GetAllProducts();
-                return Ok(products);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        [HttpGet("ProductById/{productId}")]
-        public async Task<ActionResult> GetProductById(int productId)
-        {
-            try
-            {
-                Product product = await _productRepo.GetProductById(productId);
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        [HttpGet("ProductByName/{productName}")]
-        public async Task<ActionResult> GetProductByName(string productName)
-        {
-            try
-            {
-                Product product = await _productRepo.GetProductByName(productName);
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        [HttpGet("ProductByCategory/{categoryId}")]
-        public async Task<ActionResult> GetProductsByCategory(int categoryId)
-        {
-            try
-            {
-                List<Product> products = await _productRepo.GetProductsByCategory(categoryId);
-                return Ok(products);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
-        [HttpPost]
-        [Consumes("multipart/form-data")]
-        public async Task<ActionResult> AddProduct([FromForm] IFormFile file, [FromForm] Product product)
-        {
-            if (file == null || product == null)
-            {
-                return BadRequest();
-            }
-
-            try
-            {
-                using (var memoryStream = new MemoryStream())
-                {
-                    await file.CopyToAsync(memoryStream);
-                    product.ProductImage = memoryStream.ToArray();
-                }
-
-                await _productRepo.AddProduct(product);
-                return Created($"api/product/{product.ProductId}", product);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        [HttpPut("{productId}")]
-        public async Task<ActionResult> UpdateProduct(int productId, [FromForm] IFormFile productImage, [FromForm] Product product)
-        {
-            try
-            {
-                if (productImage != null)
-                {
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        await productImage.CopyToAsync(memoryStream);
-                        product.ProductImage = memoryStream.ToArray();
-                    }
-                }
-
-                await _productRepo.UpdateProduct(productId, product);
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-
-        [HttpDelete("{productId}")]
-        public async Task<ActionResult> DeleteProduct(int productId)
-        {
-            try
-            {
-                await _productRepo.DeleteProduct(productId);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
+      _productRepo = repo;
     }
-}              
-Please provide the updated code of AdminProducts.jsx.
+
+    [HttpGet("AllProducts")]
+    public async Task<ActionResult> GetAllProducts()
+    {
+      try
+      {
+        List<Product> products = await _productRepo.GetAllProducts();
+        return Ok(products);
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, ex.Message);
+      }
+    }
+
+    [HttpGet("ProductById/{productId}")]
+    public async Task<ActionResult> GetProductById(int productId)
+    {
+      try
+      {
+        Product product = await _productRepo.GetProductById(productId);
+        return Ok(product);
+      }
+      catch (Exception ex)
+      {
+        return NotFound(ex.Message);
+      }
+    }
+
+    [HttpGet("ProductByName/{productName}")]
+    public async Task<ActionResult> GetProductByName(string productName)
+    {
+      try
+      {
+        Product product = await _productRepo.GetProductByName(productName);
+        return Ok(product);
+      }
+      catch (Exception ex)
+      {
+        return NotFound(ex.Message);
+      }
+    }
+
+    [HttpGet("ProductByCategory/{categoryId}")]
+    public async Task<ActionResult> GetProductsByCategory(int categoryId)
+    {
+      try
+      {
+        List<Product> products = await _productRepo.GetProductsByCategory(categoryId);
+        return Ok(products);
+      }
+      catch (Exception ex)
+      {
+        return NotFound(ex.Message);
+      }
+    }
+
+    [HttpPost]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> AddProduct([FromForm] IFormFile productImage, [FromForm] Product product)
+    {
+      if (productImage == null)
+      {
+        return BadRequest();
+      }
+
+      try
+      {
+        using (var memoryStream = new MemoryStream())
+        {
+          await productImage.CopyToAsync(memoryStream);
+          //product.ProductImage = memoryStream.ToArray();
+          //product.ProductFileName = productImage.FileName;
+        }
+
+        await _productRepo.AddProduct(product);
+        return Created($"api/product/{product.ProductId}", product);
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, ex.Message);
+      }
+    }
+
+    [HttpPut("{productId}")]
+    public async Task<ActionResult> UpdateProduct(int productId, [FromForm] IFormFile productImage, [FromForm] Product product)
+    {
+      try
+      {
+        if (productImage != null)
+        {
+          using (var memoryStream = new MemoryStream())
+          {
+            await productImage.CopyToAsync(memoryStream);
+            //product.ProductImage = memoryStream.ToArray();
+          }
+        }
+
+        await _productRepo.UpdateProduct(productId, product);
+        return Ok(product);
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, ex.Message);
+      }
+    }
+
+    [HttpDelete("{productId}")]
+    public async Task<ActionResult> DeleteProduct(int productId)
+    {
+      try
+      {
+        await _productRepo.DeleteProduct(productId);
+        return Ok();
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, ex.Message);
+      }
+    }
+  }
+}
+In this ProductController.cs please updatethe AddProlduct method which just added the data to the Database table. Conversion of Image data to the byte data is not required.
+
+Then please Give the Frontend webpage using react js and bootstrap To add the Products and here only, when the image is upload by the admin then it should convert to byte format in the front end only and then send it to the server. Please use the web api link "http://localhost:5183/api/Product".
