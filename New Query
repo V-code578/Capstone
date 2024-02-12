@@ -213,3 +213,114 @@ const AdminProducts = () => {
 
 export default AdminProducts;
 
+
+import React, { useState } from "react";
+
+const AdminProducts = () => {
+  const [productData, setProductData] = useState({
+    productName: "",
+    description: "",
+    price: 0,
+    categoryId: 0,
+    imagePath: "", // Add imagePath field
+  });
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setProductData({
+      ...productData,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData();
+    formData.append("productName", productData.productName);
+    formData.append("description", productData.description);
+    formData.append("price", productData.price);
+    formData.append("categoryId", productData.categoryId);
+    formData.append("imagePath", productData.imagePath); // Append the image path
+
+    try {
+      const response = await fetch("http://localhost:5183/api/Product", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert("Product added successfully!");
+        // Clear form fields after successful submission
+        setProductData({
+          productName: "",
+          description: "",
+          price: 0,
+          categoryId: 0,
+          imagePath: "", // Clear image path field
+        });
+      } else {
+        throw new Error("Failed to add product. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error adding product:", error);
+      alert("Failed to add product. Please try again.");
+    }
+  };
+
+  return (
+    <div>
+      <h1>Add Product</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Product Name:</label>
+          <input
+            type="text"
+            name="productName"
+            value={productData.productName}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Description:</label>
+          <input
+            type="text"
+            name="description"
+            value={productData.description}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Price:</label>
+          <input
+            type="number"
+            name="price"
+            value={productData.price}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Category ID:</label>
+          <input
+            type="number"
+            name="categoryId"
+            value={productData.categoryId}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Image Path:</label>
+          <input
+            type="text"
+            name="imagePath"
+            value={productData.imagePath}
+            onChange={handleInputChange}
+          />
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  );
+};
+
+export default AdminProducts;
