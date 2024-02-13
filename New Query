@@ -70,10 +70,18 @@ const LoginPage = ({ setLoggedIn, setIsAdmin }) => {
                         </Button>
                         {message && <p style={{ color: "green" }}>{message}</p>}
                     </Form>
+                    <div className="mt-3">
+                        <a href="/forgot-password">Forgot Password?</a>
+                    </div>
+                    <div className="mt-3">
+                        <Button color="link" onClick={() => navigate("/register")}>
+                            I'm a new user
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-export default LoginPage; Please add Forgot password link which navigates to ForgotPasswordPage.jsx and also add I'm a new user button which navigates to RegisterPage.jsx. Please do the stylish web page like Myntra Login page by using bootstrap
+export default LoginPage;
