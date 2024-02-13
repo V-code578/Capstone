@@ -24,11 +24,6 @@ const ForgotPasswordPage = () => {
         e.preventDefault();
 
         if (validateForm()) {
-            const user = {
-                userName: userName,
-                password: newPassword,
-            };
-
             try {
                 const response = await fetch(
                     "http://localhost:5183/api/User/ForgotPassword",
@@ -38,7 +33,7 @@ const ForgotPasswordPage = () => {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
-                            user: user,
+                            userName: userName,
                             newPassword: newPassword
                         }),
                     }
