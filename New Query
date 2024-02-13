@@ -1,22 +1,79 @@
-const updateUser = (userName) => {
-    fetch(`http://localhost:5183/api/User/ForgotPassword?newPassword=${user.password}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(user),
-    })
-        .then((response) => {
+import React, { useState } from "react";
+import { Form, FormGroup, Label, Input, Button } from "reactstrap";
+import { useNavigate } from "react-router-dom";
+
+const LoginPage = ({ setLoggedIn, setIsAdmin }) => {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [message, setMessage] = useState("");
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            const response = await fetch("http://localhost:5183/api/user/Login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ UserName: username, Password: password }),
+            });
+
             if (!response.ok) {
-                throw new Error('Failed to update user');
+                throw new Error("Invalid credentials");
             }
-            setSuccessMessage('Password updated successfully');
-            return response.json();
-        })
-        .then((data) => {
-            setUser({ userName: '', password: '' });
-        })
-        .catch((error) => {
-            console.error('Error updating user:', error);
-        });
+
+            const data = await response.json();
+            setMessage(data.message);
+
+            sessionStorage.setItem("isAdmin", data.isAdmin);
+            setIsAdmin(data.isAdmin);
+            setLoggedIn(true);
+
+            navigate("/");
+        } catch (error) {
+            setMessage(error.message);
+        }
+    };
+
+    return (
+        <div className="container">
+            <div className="row">
+                <div className="col-md-6 offset-md-3">
+                    <h2>Login</h2>
+                    <Form onSubmit={handleSubmit}>
+                        <FormGroup>
+                            <Label for="username">Username</Label>
+                            <Input
+                                type="text"
+                                name="username"
+                                id="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                            />
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="password">Password</Label>
+                            <Input
+                                type="password"
+                                name="password"
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </FormGroup>
+                        <Button color="primary" type="submit">
+                            Login
+                        </Button>
+                        {message && <p style={{ color: "green" }}>{message}</p>}
+                    </Form>
+                </div>
+            </div>
+        </div>
+    );
 };
+
+export default LoginPage; Please add Forgot password link which navigates to ForgotPasswordPage.jsx and also add I'm a new user button which navigates to RegisterPage.jsx. Please do the stylish web page like Myntra Login page by using bootstrap
