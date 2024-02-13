@@ -1,35 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import "./AdminUsers.css";
 
-// This function fetches all the Users using this Webapp and can perform all the CRUD operations.
 function AdminUsers() {
     const [users, setUsers] = useState([]);
     const [user, setUser] = useState({ userName: '', password: '' });
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
-        fetch('http://localhost:5183/api/User')
-            .then((result) => result.json())
-            .then((result) => {
-                setUsers(result);
-            });
+        fetchUsers();
     }, []);
+
+    const fetchUsers = () => {
+        fetch('http://localhost:5183/api/User')
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch users');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                setUsers(data);
+            })
+            .catch((error) => {
+                console.error('Error fetching users:', error);
+            });
+    };
 
     const deleteUser = (userName) => {
         fetch('http://localhost:5183/api/User/' + userName, {
             method: 'DELETE',
         })
-            .then((result) => result.text())
-            .then((result) => {
-                alert('User deleted');
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to delete user');
+                }
+                setSuccessMessage('User deleted successfully');
+                return response.text();
+            })
+            .then(() => {
                 setUsers(users.filter((u) => u.userName !== userName));
-            });
-    };
-
-    const fetchAllUsers = () => {
-        fetch('http://localhost:5183/api/User')
-            .then((result) => result.json())
-            .then((result) => {
-                setUsers(result);
+            })
+            .catch((error) => {
+                console.error('Error deleting user:', error);
             });
     };
 
@@ -41,11 +53,19 @@ function AdminUsers() {
             },
             body: JSON.stringify({ userName: user.userName, password: user.password }),
         })
-            .then((result) => result.json())
-            .then((result) => {
-                alert('User Added');
-                setUsers([...users, result]);
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to add user');
+                }
+                setSuccessMessage('User added successfully');
+                return response.json();
+            })
+            .then((data) => {
+                setUsers([...users, data]);
                 setUser({ userName: '', password: '' });
+            })
+            .catch((error) => {
+                console.error('Error adding user:', error);
             });
     };
 
@@ -57,121 +77,134 @@ function AdminUsers() {
             },
             body: JSON.stringify(user),
         })
-            .then((result) => result.json())
-            .then((result) => {
-                alert('User updated');
-                setUsers(users.map((u) => (u.userName === userName ? result : u)));
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to update user');
+                }
+                setSuccessMessage('User updated successfully');
+                return response.json();
+            })
+            .then((data) => {
+                setUsers(users.map((u) => (u.userName === userName ? data : u)));
                 setUser({ userName: '', password: '' });
+            })
+            .catch((error) => {
+                console.error('Error updating user:', error);
             });
     };
 
     const showUserByUsername = (userName) => {
         fetch('http://localhost:5183/api/User/' + userName)
-            .then((result) => result.json())
-            .then((result) => {
-                alert(
-                    `Username: ${result.userName}\nPassword: ${result.password}`
-                );
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                alert(`Username: ${data.userName}\nPassword: ${data.password}`);
+            })
+            .catch((error) => {
+                console.error('Error fetching user:', error);
             });
     };
 
     return (
-        <>
-            <div className="container mt-4">
-                <h2 className="main-heading">User Form</h2>
-                <div className="underline"></div>
-                <form>
-                    <div className="mb-3">
-                        <label htmlFor="userName" className="form-label">
-                            UserName:
-                        </label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="userName"
-                            value={user.userName}
-                            onChange={(e) =>
-                                setUser((prev) => ({ ...prev, userName: e.target.value }))
-                            }
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <label htmlFor="password" className="form-label">
-                            Password:
-                        </label>
-                        <input
-                            type="password"
-                            className="form-control"
-                            id="password"
-                            value={user.password}
-                            onChange={(e) =>
-                                setUser((prev) => ({ ...prev, password: e.target.value }))
-                            }
-                        />
-                    </div>
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={fetchAllUsers}
-                    >
-                        Show All Users
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-success ms-2"
-                        onClick={addUser}
-                    >
-                        Add User
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-warning ms-2"
-                        onClick={() => updateUser(user.userName)}
-                    >
-                        Update User
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-info ms-2"
-                        onClick={() => showUserByUsername(user.userName)}
-                    >
-                        Show Single User
-                    </button>
-                </form>
-                <h3 className="mt-4">List of Users</h3>
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th>UserName</th>
-                            <th>Password</th>
-                            <th>Action</th>
+        <div className="container mt-4">
+            <h2 className="main-heading">Admin Users</h2>
+            <div className="underline"></div>
+            {successMessage && (
+                <div className="alert alert-success" role="alert">
+                    {successMessage}
+                </div>
+            )}
+            <form>
+                <div className="mb-3">
+                    <label htmlFor="userName" className="form-label">
+                        UserName:
+                    </label>
+                    <input
+                        type="text"
+                        className="form-control"
+                        id="userName"
+                        value={user.userName}
+                        onChange={(e) =>
+                            setUser((prev) => ({ ...prev, userName: e.target.value }))
+                        }
+                    />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="password" className="form-label">
+                        Password:
+                    </label>
+                    <input
+                        type="password"
+                        className="form-control"
+                        id="password"
+                        value={user.password}
+                        onChange={(e) =>
+                            setUser((prev) => ({ ...prev, password: e.target.value }))
+                        }
+                    />
+                </div>
+                <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={fetchUsers}
+                >
+                    Show All Users
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-success ms-2"
+                    onClick={addUser}
+                >
+                    Add User
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-warning ms-2"
+                    onClick={() => updateUser(user.userName)}
+                >
+                    Update User
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-info ms-2"
+                    onClick={() => showUserByUsername(user.userName)}
+                >
+                    Show Single User
+                </button>
+            </form>
+            <h3 className="mt-4">List of Users</h3>
+            <table className="table">
+                <thead>
+                    <tr>
+                        <th>UserName</th>
+                        <th>Password</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {users.map((user) => (
+                        <tr key={user.userName}>
+                            <td>{user.userName}</td>
+                            <td>{user.password}</td>
+                            <td>
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={() => deleteUser(user.userName)}
+                                >
+                                    Delete
+                                </button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {users.map((user) => (
-                            <tr key={user.userName}>
-                                <td>{user.userName}</td>
-                                <td>{user.password}</td>
-                                <td>
-                                    <button
-                                        type="button"
-                                        className="btn btn-danger"
-                                        onClick={() => deleteUser(user.userName)}
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 }
 
 export default AdminUsers;
-
-AdminUsers:1  Uncaught (in promise) SyntaxError: Unexpected token 'U', "User added"... is not valid JSON
-After added user I didn't get an alert message in dialog box. please rectify and correct it.
-And Do the style on web page like myntra webpage like buttons, form and all by using bootstrap.
