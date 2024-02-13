@@ -3,14 +3,14 @@ import { Form, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 const ForgotPasswordPage = () => {
-    const [email, setEmail] = useState("");
+    const [userName, setUserName] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [validationError, setValidationError] = useState("");
     const navigate = useNavigate();
 
     const validateForm = () => {
-        if (!email) {
-            setValidationError("Email is required");
+        if (!userName) {
+            setValidationError("Username is required");
             return false;
         }
         if (!newPassword) {
@@ -25,15 +25,15 @@ const ForgotPasswordPage = () => {
 
         if (validateForm()) {
             const user = {
-                email: email,
+                userName: userName,
                 password: newPassword,
             };
 
             try {
                 const response = await fetch(
-                    "http://localhost:5183/api/User/forgotpassword",
+                    "http://localhost:5183/api/User/ForgotPassword",
                     {
-                        method: "PUT",
+                        method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                         },
@@ -60,13 +60,13 @@ const ForgotPasswordPage = () => {
                 <div className="col-md-6">
                     <h1>Forgot Password</h1>
                     <Form onSubmit={handleSubmit}>
-                        <Form.Group controlId="formEmail">
-                            <Form.Label>Email</Form.Label>
+                        <Form.Group controlId="formUserName">
+                            <Form.Label>Username</Form.Label>
                             <Form.Control
-                                type="email"
-                                placeholder="Enter email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                type="text"
+                                placeholder="Enter username"
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
                             />
                         </Form.Group>
 
@@ -101,27 +101,3 @@ const ForgotPasswordPage = () => {
 };
 
 export default ForgotPasswordPage;
-Please replace username instead of email.
-Please use this method to update the password:
-const updateUser = (userName) => {
-    fetch(`http://localhost:5183/api/User/ForgotPassword?newPassword=${user.password}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(user),
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error('Failed to update user');
-            }
-            setSuccessMessage('Password updated successfully');
-            return response.json();
-        })
-        .then((data) => {
-            setUser({ userName: '', password: '' });
-        })
-        .catch((error) => {
-            console.error('Error updating user:', error);
-        });
-};
