@@ -1,87 +1,127 @@
 import React, { useState } from "react";
-import { Form, FormGroup, Label, Input, Button } from "reactstrap";
+import { Form, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
-const LoginPage = ({ setLoggedIn, setIsAdmin }) => {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [message, setMessage] = useState("");
+const ForgotPasswordPage = () => {
+    const [email, setEmail] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [validationError, setValidationError] = useState("");
     const navigate = useNavigate();
+
+    const validateForm = () => {
+        if (!email) {
+            setValidationError("Email is required");
+            return false;
+        }
+        if (!newPassword) {
+            setValidationError("New password is required");
+            return false;
+        }
+        return true;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        try {
-            const response = await fetch("http://localhost:5183/api/user/Login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ UserName: username, Password: password }),
-            });
+        if (validateForm()) {
+            const user = {
+                email: email,
+                password: newPassword,
+            };
 
-            if (!response.ok) {
-                throw new Error("Invalid credentials");
+            try {
+                const response = await fetch(
+                    "http://localhost:5183/api/User/forgotpassword",
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(user),
+                    }
+                );
+
+                if (response.ok) {
+                    navigate("/login");
+                } else {
+                    const error = await response.json();
+                    setValidationError(error.message);
+                }
+            } catch (error) {
+                console.error(error);
+                setValidationError("An error occurred. Please try again.");
             }
-
-            const data = await response.json();
-            setMessage(data.message);
-
-            sessionStorage.setItem("isAdmin", data.isAdmin);
-            setIsAdmin(data.isAdmin);
-            setLoggedIn(true);
-
-            navigate("/");
-        } catch (error) {
-            setMessage(error.message);
         }
     };
 
     return (
         <div className="container">
-            <div className="row">
-                <div className="col-md-6 offset-md-3">
-                    <h2>Login</h2>
+            <div className="row justify-content-center">
+                <div className="col-md-6">
+                    <h1>Forgot Password</h1>
                     <Form onSubmit={handleSubmit}>
-                        <FormGroup>
-                            <Label for="username">Username</Label>
-                            <Input
-                                type="text"
-                                name="username"
-                                id="username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                required
+                        <Form.Group controlId="formEmail">
+                            <Form.Label>Email</Form.Label>
+                            <Form.Control
+                                type="email"
+                                placeholder="Enter email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="password">Password</Label>
-                            <Input
+                        </Form.Group>
+
+                        <Form.Group controlId="formNewPassword">
+                            <Form.Label>New Password</Form.Label>
+                            <Form.Control
                                 type="password"
-                                name="password"
-                                id="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
+                                placeholder="Enter new password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
                             />
-                        </FormGroup>
-                        <Button color="primary" type="submit">
-                            Login
+                        </Form.Group>
+
+                        <Button variant="primary" type="submit">
+                            Reset Password
                         </Button>
-                        {message && <p style={{ color: "green" }}>{message}</p>}
                     </Form>
-                    <div className="mt-3">
-                        <a href="/forgot-password">Forgot Password?</a>
-                    </div>
-                    <div className="mt-3">
-                        <Button color="link" onClick={() => navigate("/register")}>
-                            I'm a new user
-                        </Button>
-                    </div>
+
+                    {validationError && (
+                        <div className="alert alert-danger mt-3" role="alert">
+                            {validationError}
+                        </div>
+                    )}
+
+                    <p className="mt-3">
+                        <a href="/login">Back to Login</a>
+                    </p>
                 </div>
             </div>
         </div>
     );
 };
 
-export default LoginPage;
+export default ForgotPasswordPage;
+Please replace username instead of email.
+Please use this method to update the password:
+const updateUser = (userName) => {
+    fetch(`http://localhost:5183/api/User/ForgotPassword?newPassword=${user.password}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user),
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Failed to update user');
+            }
+            setSuccessMessage('Password updated successfully');
+            return response.json();
+        })
+        .then((data) => {
+            setUser({ userName: '', password: '' });
+        })
+        .catch((error) => {
+            console.error('Error updating user:', error);
+        });
+};
