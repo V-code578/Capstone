@@ -33,9 +33,9 @@ const MensShirts = () => {
             <h1 className="my-4">Men's Shirts</h1>
             <Row>
                 {products.map(product => (
-                    <Col key={product.productId} md={4} sm={6} xs={12} className="mb-4">
-                        <Card>
-                            <Card.Img variant="top" src={product.imagePath} alt={product.productName} />
+                    <Col key={product.productId} md={12} className="mb-4">
+                        <Card className="flex-row">
+                            <Card.Img src={product.imagePath} alt={product.productName} style={{ width: '200px', height: 'auto' }} />
                             <Card.Body>
                                 <Card.Title>{product.productName}</Card.Title>
                                 <Card.Text>{product.description}</Card.Text>
@@ -52,5 +52,3 @@ const MensShirts = () => {
 };
 
 export default MensShirts;
-
-npm install react-bootstrap bootstrap
