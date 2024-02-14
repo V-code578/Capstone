@@ -1,98 +1,304 @@
-import React, { useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+Product.cs: 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-const ForgotPasswordPage = () => {
-    const [userName, setUserName] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [validationError, setValidationError] = useState("");
-    const navigate = useNavigate();
+namespace OnlineShopping.Models
+{
+    [Table("Product")]
+    public class Product
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ProductId { get; set; }
 
-    const validateForm = () => {
-        if (!userName) {
-            setValidationError("Username is required");
-            return false;
+        [Required]
+        [StringLength(30)] // Adjust the length as needed
+        public string ProductName { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string Description { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18, 2)")] // Adjust precision and scale as needed
+        public decimal Price { get; set; }
+
+        [ForeignKey("Category")]
+        public int CategoryId { get; set; }
+
+        public virtual Category? Category { get; set; }
+
+        [Required]
+        [StringLength(255)]
+        public string ImagePath { get; set; } // New attribute for storing the image file path
+
+        public virtual ICollection<Cart> Carts { get; set; }
+        public virtual ICollection<WishList> WishLists { get; set; }
+
+        public Product()
+        {
+            Carts = new HashSet<Cart>();
+            WishLists = new HashSet<WishList>();
         }
-        if (!newPassword) {
-            setValidationError("New password is required");
-            return false;
+    }
+}
+EFProductRepo.cs:
+using Microsoft.EntityFrameworkCore;
+using OnlineShopping.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace OnlineShopping.Repos
+{
+    public class EFProductRepo : IProductRepo
+    {
+        OnlineShoppingDbContext ctx = new OnlineShoppingDbContext();
+        public async Task AddProduct(Product product)
+        {
+            ctx.Products.Add(product);
+            await ctx.SaveChangesAsync();
         }
-        return true;
-    };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+        public async Task DeleteProduct(int productId)
+        {
+            try
+            {
+                Product product = await GetProductById(productId);
+                ctx.Products.Remove(product);
+                await ctx.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
 
-        if (validateForm()) {
-            try {
-                const response = await fetch(
-                    `http://localhost:5183/api/User/ForgotPassword?newPassword=${newPassword}`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ userName: userName }),
-                    }
-                );
-
-                if (response.ok) {
-                    navigate("/login");
-                } else {
-                    const error = await response.json();
-                    setValidationError(error.message);
-                }
-            } catch (error) {
-                console.error(error);
-                setValidationError("An error occurred. Please try again.");
+                throw new Exception(ex.Message);
             }
         }
-    };
 
-    return (
-        <div className="container">
-            <div className="row justify-content-center">
-                <div className="col-md-6">
-                    <h1>Forgot Password</h1>
-                    <Form onSubmit={handleSubmit}>
-                        <Form.Group controlId="formUserName">
-                            <Form.Label>Username</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="Enter username"
-                                value={userName}
-                                onChange={(e) => setUserName(e.target.value)}
-                            />
-                        </Form.Group>
+        public async Task<List<Product>> GetAllProducts()
+        {
+            try
+            {
+                List<Product> products = await ctx.Products.ToListAsync();
+                return products;
+            }
+            catch (Exception ex)
+            {
 
-                        <Form.Group controlId="formNewPassword">
-                            <Form.Label>New Password</Form.Label>
-                            <Form.Control
-                                type="password"
-                                placeholder="Enter new password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                            />
-                        </Form.Group>
+                throw new Exception(ex.Message);
+            }
+        }
 
-                        <Button variant="primary" type="submit">
-                            Reset Password
-                        </Button>
-                    </Form>
+        public async Task<Product> GetProductById(int productId)
+        {
+            try
+            {
+                Product product = await (from p in ctx.Products where p.ProductId == productId select p).FirstAsync();
+                return product;
+            }
+            catch (Exception ex)
+            {
 
-                    {validationError && (
-                        <div className="alert alert-danger mt-3" role="alert">
-                            {validationError}
-                        </div>
-                    )}
+                throw new Exception(ex.Message);
+            }
+        }
 
-                    <p className="mt-3">
-                        <a href="/login">Back to Login</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
-};
+        public async Task<Product> GetProductByName(string productName)
+        {
+            try
+            {
+                Product product = await (from p in ctx.Products where p.ProductName == productName select p).FirstAsync();
+                return product;
+            }
+            catch (Exception ex)
+            {
 
-export default ForgotPasswordPage;
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<List<Product>> GetProductsByCategory(int categoryId)
+        {
+            try
+            {
+                List<Product> products = await (from p in ctx.Products where p.CategoryId == categoryId select p).ToListAsync();
+                return products;
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task UpdateProduct(int productId, Product product)
+        {
+            try
+            {
+                Product product1 = await GetProductById(productId);
+                product1.ProductName = product.ProductName;
+                product1.Description = product.Description;
+                product1.Price = product.Price;
+                product1.CategoryId = product.CategoryId;
+                product1.ImagePath = product.ImagePath;
+                await ctx.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message);
+            }
+        }
+    }
+}
+ProductController.cs:
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using OnlineShopping.Models;
+using OnlineShopping.Repos;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace webapi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        private readonly IProductRepo _productRepo;
+
+        public ProductController(IProductRepo repo)
+        {
+            _productRepo = repo;
+        }
+
+        [HttpGet("AllProducts")]
+        public async Task<ActionResult> GetAllProducts()
+        {
+            try
+            {
+                List<Product> products = await _productRepo.GetAllProducts();
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("ProductById/{productId}")]
+        public async Task<ActionResult> GetProductById(int productId)
+        {
+            try
+            {
+                Product product = await _productRepo.GetProductById(productId);
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        [HttpGet("ProductByName/{productName}")]
+        public async Task<ActionResult> GetProductByName(string productName)
+        {
+            try
+            {
+                Product product = await _productRepo.GetProductByName(productName);
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        [HttpGet("ProductByCategory/{categoryId}")]
+        public async Task<ActionResult> GetProductsByCategory(int categoryId)
+        {
+            try
+            {
+                List<Product> products = await _productRepo.GetProductsByCategory(categoryId);
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult> AddProduct( [FromForm] Product product)
+        {
+            if (product == null || string.IsNullOrEmpty(product.ImagePath))
+            {
+                return BadRequest("Image Path is required.");
+            }
+            try
+            {
+                await _productRepo.AddProduct(product);
+                return Created($"api/product/{product.ProductId}", product);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+
+            
+        }
+
+        [HttpPut("{productId}")]
+        public async Task<ActionResult> UpdateProduct(int productId, [FromForm] IFormFile productImage, [FromForm] Product product)
+        {
+            try
+            {
+                if (productImage != null)
+                {
+                    // Save the new file to a local path
+                    var filePath = Path.Combine("C:\\Capstone Project FH\\OnlineShopping\\OnlineShoppingAPI\\reactapp\\src\\assets\\", productImage.FileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await productImage.CopyToAsync(stream);
+                    }
+
+                    // Set the new file path in the product
+                    product.ImagePath = filePath;
+                }
+
+                await _productRepo.UpdateProduct(productId, product);
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
+        [HttpDelete("{productId}")]
+        public async Task<ActionResult> DeleteProduct(int productId)
+        {
+            try
+            {
+                await _productRepo.DeleteProduct(productId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+    }
+}
+By using all these files, please provide a MensShirts.jsx webpage using fetch method and ReactJS and bootstrap, which contains Product Image, Product Name, Description, Price, Add To Cart button, Wishlist button.All these details should be display using card and grid system.
+*The ProductImage should be display by using path of the image which is present in the Database(observe Product.cs Model). All other things should be acces from database only. By using this webAPI Link "http://localhost:5183/api/Product" Please provide the page.
