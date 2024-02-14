@@ -12,7 +12,17 @@ const MensShirts = () => {
         try {
             const response = await fetch('http://localhost:5183/api/Product/AllProducts');
             const data = await response.json();
-            setProducts(data);
+            // Assuming your backend replaces the local path with a URL path
+            const updatedData = data.map(product => {
+                return {
+                    ...product,
+                    imagePath: product.imagePath.replace(
+                        /C:\\Capstone Project FH\\OnlineShopping\\OnlineShoppingAPI\\reactapp\\src/,
+                        'http://localhost:5183/' // Replace with the URL path your server uses to serve images
+                    )
+                };
+            });
+            setProducts(updatedData);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -51,5 +61,5 @@ const MensShirts = () => {
     );
 };
 
-export default MensShirts;                                                                                                                                                                                                                        The image is not fetched from the path which is stored in Database. for example the path is like:"C:\Capstone Project FH\OnlineShopping\OnlineShoppingAPI\reactapp\src\assets\Roadster.jpg". Please fetch the image from the path.
-The image is not fetched from the path which is stored in Database. for example the path is like:"C:\Capstone Project FH\OnlineShopping\OnlineShoppingAPI\reactapp\src\assets\Roadster.jpg". Please fetch the image from the path.
+export default MensShirts;
+Please correct the code to access the image from the database by using the image path.
