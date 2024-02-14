@@ -52,3 +52,4 @@ const MensShirts = () => {
 };
 
 export default MensShirts;                                                                                                                                                                                                                        The image is not fetched from the path which is stored in Database. for example the path is like:"C:\Capstone Project FH\OnlineShopping\OnlineShoppingAPI\reactapp\src\assets\Roadster.jpg". Please fetch the image from the path.
+The image is not fetched from the path which is stored in Database. for example the path is like:"C:\Capstone Project FH\OnlineShopping\OnlineShoppingAPI\reactapp\src\assets\Roadster.jpg". Please fetch the image from the path.
