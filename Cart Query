@@ -32,27 +32,9 @@ const Cart = () => {
         }
     };
 
-    const handleQuantityChange = async (event, productId) => {
-        const newQuantity = event.target.value;
-        try {
-            await fetch(`https://localhost:7075/api/Cart/Update/username/${productId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    quantity: newQuantity
-                })
-            });
-            fetchCartItems(); // Update the cart items after successful update
-        } catch (error) {
-            console.error('Error updating quantity:', error);
-        }
-    };
-
     const handleBuyNow = () => {
         // Navigate to the Buy Now page
-        navigate('/buynow');
+        navigate('/buy-now');
     };
 
     return (
@@ -64,7 +46,6 @@ const Cart = () => {
                         <th>Product Image</th>
                         <th>Product Name</th>
                         <th>Price</th>
-                        <th>Quantity</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -73,14 +54,7 @@ const Cart = () => {
                         <tr key={item.productId}>
                             <td><img src={`/assets/${item.imagePath}`} alt={item.productName} style={{ width: '100px', height: 'auto' }} /></td>
                             <td>{item.productName}</td>
-                            <td>${item.price}</td>
-                            <td>
-                                <select value={item.quantity} onChange={(event) => handleQuantityChange(event, item.productId)}>
-                                    {[...Array(10).keys()].map((quantity) => (
-                                        <option key={quantity} value={quantity}>{quantity}</option>
-                                    ))}
-                                </select>
-                            </td>
+                            <td>${(item.price * item.quantity).toFixed(2)}</td>
                             <td>
                                 <Button variant="danger" onClick={() => handleRemoveFromCart(item.productId)}>Remove</Button>
                             </td>
