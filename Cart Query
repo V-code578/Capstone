@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchCartItems();
@@ -10,9 +12,9 @@ const Cart = () => {
 
     const fetchCartItems = async () => {
         try {
-            const loggedInUser = sessionStorage.getItem('username');
-            const response = await fetch(`https://localhost:7075/api/Cart/CartByName/${loggedInUser}`);
+            const response = await fetch('https://localhost:7075/api/Cart/CartByName/username'); // Replace 'username' with the actual username
             const data = await response.json();
+            console.log('Cart items:', data); // Add this line
             setCartItems(data);
         } catch (error) {
             console.error('Error fetching cart items:', error);
@@ -21,8 +23,7 @@ const Cart = () => {
 
     const handleRemoveFromCart = async (productId) => {
         try {
-            const loggedInUser = sessionStorage.getItem('username');
-            await fetch(`https://localhost:7075/api/Cart/remove/${loggedInUser}/${productId}`, {
+            await fetch(`https://localhost:7075/api/Cart/remove/username/${productId}`, {
                 method: 'DELETE'
             });
             fetchCartItems();
@@ -33,9 +34,25 @@ const Cart = () => {
 
     const handleQuantityChange = async (event, productId) => {
         const newQuantity = event.target.value;
-        // You should implement an API endpoint to update the quantity in the cart
-        // This is just a placeholder to demonstrate the concept
-        console.log(`Updating quantity for product ${productId} to ${newQuantity}`);
+        try {
+            await fetch(`https://localhost:7075/api/Cart/Update/username/${productId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    quantity: newQuantity
+                })
+            });
+            fetchCartItems(); // Update the cart items after successful update
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+        }
+    };
+
+    const handleBuyNow = () => {
+        // Navigate to the Buy Now page
+        navigate('/buynow');
     };
 
     return (
@@ -58,7 +75,7 @@ const Cart = () => {
                             <td>{item.productName}</td>
                             <td>${item.price}</td>
                             <td>
-                                <select defaultValue={item.quantity} onChange={(event) => handleQuantityChange(event, item.productId)}>
+                                <select value={item.quantity} onChange={(event) => handleQuantityChange(event, item.productId)}>
                                     {[...Array(10).keys()].map((quantity) => (
                                         <option key={quantity} value={quantity}>{quantity}</option>
                                     ))}
@@ -71,6 +88,7 @@ const Cart = () => {
                     ))}
                 </tbody>
             </Table>
+            <Button variant="primary" onClick={handleBuyNow}>Buy Now</Button>
         </Container>
     );
 };
