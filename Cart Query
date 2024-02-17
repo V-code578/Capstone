@@ -48,7 +48,7 @@ const MensShirts = () => {
             });
             if (response.ok) {
                 console.log('Product added to cart:', productId);
-                navigate('/Cart'); // Navigate to cart page after adding to cart
+                navigate('/cart'); // Navigate to cart page after adding to cart
             } else {
                 console.error('Failed to add product to cart:', response.statusText);
             }
@@ -86,4 +86,3 @@ const MensShirts = () => {
 };
 
 export default MensShirts;
-After login also it navigated to Login Page, Please update the code, after login it should navigate to Cart Page.
