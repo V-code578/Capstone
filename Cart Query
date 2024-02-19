@@ -12,57 +12,97 @@ const Cart = () => {
 
     const fetchCartItems = async () => {
         try {
-            const response = await fetch('https://localhost:7075/api/Cart/CartByName/username'); // Replace 'username' with the actual username
-            const data = await response.json();
-            console.log('Cart items:', data); // Add this line
-            setCartItems(data);
+            const loggedInUser = sessionStorage.getItem('username');
+
+            // Fetch cart items for the logged in user
+            const cartResponse = await fetch(`https://localhost:7075/api/Cart/CartByName/${loggedInUser}`);
+            const cartData = await cartResponse.json();
+
+            // Fetch product details for each item in the cart
+            const cartItemsWithDetails = await Promise.all(
+                cartData.map(async (item) => {
+                    // Fetch product details using productId
+                    const productResponse = await fetch(`https://localhost:7075/api/Product/${item.productId}`);
+                    const productData = await productResponse.json();
+
+                    return {
+                        ...item,
+                        image: productData.imagePath, // Assuming the image path is provided by the API
+                        name: productData.productName,
+                        price: productData.price
+                    };
+                })
+            );
+
+            setCartItems(cartItemsWithDetails);
         } catch (error) {
             console.error('Error fetching cart items:', error);
         }
     };
 
-    const handleRemoveFromCart = async (productId) => {
+    const removeFromCart = async (cartItemId) => {
         try {
-            await fetch(`https://localhost:7075/api/Cart/remove/username/${productId}`, {
+            const response = await fetch(`https://localhost:7075/api/Cart/Remove/${cartItemId}`, {
                 method: 'DELETE'
             });
-            fetchCartItems();
+            if (response.ok) {
+                console.log('Item removed from cart:', cartItemId);
+                fetchCartItems(); // Fetch updated cart items after removing
+            } else {
+                console.error('Failed to remove item from cart:', response.statusText);
+            }
         } catch (error) {
             console.error('Error removing item from cart:', error);
         }
     };
 
-    const handleBuyNow = () => {
-        // Navigate to the Buy Now page
-        navigate('/buy-now');
+    const checkout = async () => {
+        try {
+            const loggedInUser = sessionStorage.getItem('username');
+            const response = await fetch(`https://localhost:7075/api/Cart/Checkout/${loggedInUser}`, {
+                method: 'POST'
+            });
+            if (response.ok) {
+                console.log('Checkout successful');
+                navigate('/checkout-success'); // Navigate to checkout success page
+            } else {
+                console.error('Failed to checkout:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error during checkout:', error);
+        }
     };
 
     return (
         <Container>
             <h2 className="my-4">Cart</h2>
-            <Table striped bordered hover>
-                <thead>
-                    <tr>
-                        <th>Product Image</th>
-                        <th>Product Name</th>
-                        <th>Price</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {cartItems.map(item => (
-                        <tr key={item.productId}>
-                            <td><img src={`/assets/${item.imagePath}`} alt={item.productName} style={{ width: '100px', height: 'auto' }} /></td>
-                            <td>{item.productName}</td>
-                            <td>${(item.price * item.quantity).toFixed(2)}</td>
-                            <td>
-                                <Button variant="danger" onClick={() => handleRemoveFromCart(item.productId)}>Remove</Button>
-                            </td>
+            {cartItems.length > 0 ? (
+                <Table striped bordered hover>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Actions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </Table>
-            <Button variant="primary" onClick={handleBuyNow}>Buy Now</Button>
+                    </thead>
+                    <tbody>
+                        {cartItems.map(item => (
+                            <tr key={item.cartItemId}>
+                                <td><img src={`/assets/${item.image}`} alt={item.name} style={{ width: '50px', height: 'auto' }} /></td>
+                                <td>{item.name}</td>
+                                <td>${item.price}</td>
+                                <td>
+                                    <Button variant="danger" onClick={() => removeFromCart(item.cartItemId)}>Remove</Button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            ) : (
+                <p>Your cart is empty.</p>
+            )}
+            <Button variant="primary" onClick={checkout}>Checkout</Button>
         </Container>
     );
 };
