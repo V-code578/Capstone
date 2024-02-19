@@ -1,6 +1,6 @@
 const removeFromCart = async (username, productId) => {
     try {
-        const response = await fetch(`https://localhost:7075/api/Cart/remove?username=${username}&productId=${productId}`, {
+        const response = await fetch(`https://localhost:7075/api/Cart/remove?userName=${username}&productId=${productId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -16,6 +16,7 @@ const removeFromCart = async (username, productId) => {
         console.error('Error removing item from cart:', error);
     }
 };
+
 
 
 {cartItems.map((item, index) => (
